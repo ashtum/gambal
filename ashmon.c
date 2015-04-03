@@ -1,5 +1,5 @@
 /**
- * ashmon version 1.0
+ * ashmon version 1.1
  * ashmon a free and open source tool for bandwidth monitoring in linux with gui .
  * (C) 2015 by Mohammad Nejati www.github.com/ashtum
  * Released under the GPL v2.0
@@ -21,7 +21,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <sys/timeb.h>
-
+#include <sys/stat.h>
 
 typedef struct
 {
@@ -132,10 +132,11 @@ int main(int argc, char *argv[]) {
     int win_x = 350, win_y = 350;
     int opacity = 60;
     unsigned int mask_return;
+    char * home_patch = getenv ("HOME");
     
+    strcat(home_patch,"/.ashmon_config");
     
-    
-	fptr = fopen("ashmon_config", "r");
+	fptr = fopen(home_patch, "r");
 	if(fptr)
 	{
 		// read config variables
@@ -154,7 +155,8 @@ int main(int argc, char *argv[]) {
 		}
 		fclose(fptr);
 	}else{
-		fptr = fopen("ashmon_config", "wb");
+		fptr = fopen(home_patch, "wb+");
+		chmod(home_patch,0666);
 		if(fptr){
 			fclose(fptr);
 		}
@@ -165,7 +167,7 @@ int main(int argc, char *argv[]) {
 	XMoveWindow(dis, win , win_x , win_y);
 	
 	void save_config_on_file(){
-		fptr = fopen("ashmon_config", "w");
+		fptr = fopen(home_patch, "wb+");
 		if(fptr!= NULL){
 			XTranslateCoordinates( dis, win, DefaultRootWindow(dis), 0, 0, &win_x, &win_y, &window_returned );
 			XGetWindowAttributes( dis, win, &xwa );
