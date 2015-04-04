@@ -1,5 +1,5 @@
 /**
- * ashmon version 1.2
+ * ashmon version 1.3
  * ashmon a free and open source tool for bandwidth monitoring in linux with gui .
  * (C) 2015 by Mohammad Nejati www.github.com/ashtum
  * Released under the GPL v2.0
@@ -134,9 +134,20 @@ int main(int argc, char *argv[]) {
     int win_x = 350, win_y = 350;
     int opacity = 60;
     unsigned int mask_return;
-    char * home_patch = getenv ("HOME");
-    
+    char home_patch[256];
+    strcpy(home_patch, getenv ("HOME"));
     strcat(home_patch,"/.ashmon_config");
+    
+    void save_config_on_file(){
+		fptr = fopen(home_patch, "wb+");
+		if(fptr!= NULL){
+			XTranslateCoordinates( dis, win, DefaultRootWindow(dis), 0, 0, &win_x, &win_y, &window_returned );
+			XGetWindowAttributes( dis, win, &xwa );
+			
+			fprintf(fptr,"%i\n%i\n%i", opacity , win_x - xwa.x , win_y - xwa.y);
+			fclose(fptr);
+		}
+	} 
     
 	fptr = fopen(home_patch, "r");
 	if(fptr)
@@ -158,8 +169,9 @@ int main(int argc, char *argv[]) {
 		fclose(fptr);
 	}else{
 		fptr = fopen(home_patch, "wb+");
-		chmod(home_patch,0666);
 		if(fptr){
+			chmod(home_patch,0666);
+			save_config_on_file();
 			fclose(fptr);
 		}
 	}
@@ -168,16 +180,6 @@ int main(int argc, char *argv[]) {
 	change_opacity(dis, &win,&opacity);
 	XMoveWindow(dis, win , win_x , win_y);
 	
-	void save_config_on_file(){
-		fptr = fopen(home_patch, "wb+");
-		if(fptr!= NULL){
-			XTranslateCoordinates( dis, win, DefaultRootWindow(dis), 0, 0, &win_x, &win_y, &window_returned );
-			XGetWindowAttributes( dis, win, &xwa );
-			
-			fprintf(fptr,"%i\n%i\n%i", opacity , win_x - xwa.x , win_y - xwa.y);
-			fclose(fptr);
-		}
-	}    
     
     XMapWindow(dis, win);
     XFlush(dis);

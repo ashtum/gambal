@@ -4,7 +4,7 @@
 
 A low size , free and open source graphical application for network usage monitoring in linux that directly use xlib for draw graphs so work fine on any linux distributions and don't need extra gui library .
 
-![ashmon_shot](https://cloud.githubusercontent.com/assets/11743154/6987887/5575b242-da61-11e4-9076-0d1dc9ca5f70.png)
+![ashmon_shot](https://cloud.githubusercontent.com/assets/11743154/6994226/55522172-db26-11e4-9648-7f3d6f932142.png)
 
 
 ## Download and Usage
@@ -24,6 +24,9 @@ Download [Latest Release](https://github.com/ashtum/ashmon/releases/latest) extr
 install xlib development headers : ``` sudo apt-get install libx11-dev ``` or ``` sudo yum install libX11-devel ```<br/>go to project folder and run make : ``` sudo make ```
 
 ## Changelogs
+####v1.2 :
+>Added Total Download/Upload bytes .
+
 ####v1.1 :
 >Edited ashmon_config path to ~/home .
 
