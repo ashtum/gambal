@@ -1,5 +1,5 @@
 /**
- * ashmon version 1.1
+ * ashmon version 1.2
  * ashmon a free and open source tool for bandwidth monitoring in linux with gui .
  * (C) 2015 by Mohammad Nejati www.github.com/ashtum
  * Released under the GPL v2.0
@@ -31,6 +31,8 @@ typedef struct
     unsigned int rx_rates[100];
     char * rx_rate_str;
     char * tx_rate_str;
+    char * rx_str;
+    char * tx_str;
     char * dev_name;
     int max_rate;
    
@@ -44,7 +46,7 @@ int drawable = 0;
 
 void * link_speed();
 char * readfile();
-char * readable_fs(double);
+char * readable_fs(u_int8_t,double);
 char * file_to_string();
 void timerFired();
 void change_opacity();
@@ -76,7 +78,7 @@ int main(int argc, char *argv[]) {
     attr.colormap = XCreateColormap(dis, DefaultRootWindow(dis), vinfo.visual, AllocNone);
     attr.border_pixel = 0;
     attr.background_pixel = 0;  
-	win = XCreateWindow(dis, DefaultRootWindow(dis), 0, 0, 176, 130, 0, vinfo.depth, InputOutput, vinfo.visual, CWColormap | CWBorderPixel |CWBackPixel, &attr);
+	win = XCreateWindow(dis, DefaultRootWindow(dis), 0, 0, 176, 145, 0, vinfo.depth, InputOutput, vinfo.visual, CWColormap | CWBorderPixel |CWBackPixel, &attr);
     gc = XCreateGC(dis, win, 0, 0);
     XStoreName(dis, win, (char *)"Ashtum Monitor");
     XSelectInput(dis, win,ExposureMask | KeyPressMask | KeyReleaseMask | PointerMotionMask | ButtonPressMask | ButtonReleaseMask  | StructureNotifyMask );
@@ -287,9 +289,9 @@ void * link_speed(){
         } else {
             mainlink.rx_rates[0] = 0;
         }
-        mainlink.rx_rate_str = readable_fs(mainlink.rx_rates[0]);
+        mainlink.rx_rate_str = readable_fs(1,mainlink.rx_rates[0]);
         mainlink.last_rx = atoi(source);
-	 
+		mainlink.rx_str = readable_fs(0,mainlink.last_rx);
 
 
         asprintf(&devs,"%s%s%s","/sys/class/net/", mainlink.dev_name,"/statistics/tx_bytes");
@@ -303,9 +305,9 @@ void * link_speed(){
         } else {
             mainlink.tx_rates[0] = 0;
         }
-        mainlink.tx_rate_str = readable_fs(mainlink.tx_rates[0]);
+        mainlink.tx_rate_str = readable_fs(1,mainlink.tx_rates[0]);
         mainlink.last_tx = atoi(source);
-        
+        mainlink.tx_str = readable_fs(0,mainlink.last_tx);
         
         mainlink.max_rate = 0;
         for(i=0; i<100; i++)
@@ -332,26 +334,30 @@ void timerFired(Display * dis,Window  *win, GC * gc) {
         int download_color = 0xFF008344;
         int upload_download_color = 0xFFFFB300;
         int background_color = 0xBBBBBBBB;
-        int primary_color = 0xFF0064DC;
+        int primary_color = 0xFF119999;
         
 		// remove shapes
         XSetForeground(dis, *gc, background_color);
-        XFillRectangle(dis, *win, *gc, 0, 0, 176, 130);
+        XFillRectangle(dis, *win, *gc, 0, 0, 176, 145);
        
        
         
         // primry shape draws
         XSetForeground(dis, *gc, primary_color);
         XDrawLine(dis, *win, *gc, 5, 106, 170, 106);   
-		XDrawRectangle(dis, *win, *gc, 0, 0, 175, 129);
+		XDrawRectangle(dis, *win, *gc, 0, 0, 175, 144);
         for (i=0; i<5; i++) {
             char * label_str ;
-            label_str = readable_fs((6.00-i)*(mainlink.max_rate/6.00));
+            label_str = readable_fs(1,(6.00-i)*(mainlink.max_rate/6.00));
 
             XDrawString(dis, *win, *gc, 5, i * 100/5 +15, label_str, strlen(label_str));
         }
 
-
+		
+        XDrawString(dis, *win, *gc, 92, 140, "UL:", 3);
+        XDrawString(dis, *win, *gc, 113, 140, mainlink.tx_str, strlen(mainlink.tx_str));
+        XDrawString(dis, *win, *gc, 5, 140, "DL:", 3);
+        XDrawString(dis, *win, *gc, 25, 140, mainlink.rx_str, strlen(mainlink.rx_str));
 
         // red shape draws
         XSetForeground(dis, *gc, upload_color);
@@ -423,15 +429,21 @@ char * file_to_string(char * address){
     return buffer;
 }
 
-char * readable_fs(double size) {
+char * readable_fs(u_int8_t pers,double size) {
     char * buf=(char *) malloc(sizeof(char) * 10);
     int i = 0;
-    const char* units[] = {"B/s", "KB/s", "MB/s", "GB/s", "TB/s", "PB/s", "EB/s", "ZB/s", "YB/s"};
+    char* units[] = {"B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
     while (size > 1024) {
         size /= 1024;
         i++;
     }
-    sprintf(buf, "%.*f %s", i, size, units[i]);
+
+	if(pers){
+		sprintf(buf, "%.*f %s/s", i, size, units[i]);
+	}else{
+		sprintf(buf, "%.*f %s", i, size, units[i]);
+	}
+    
     return buf;
 }
 

@@ -8,9 +8,7 @@ A low size , free and open source graphical application for network usage monito
 
 
 ## Download and Usage
-Download [Latest Release](https://github.com/ashtum/ashmon/releases/latest) extract file , go to path and execute ashmon by : ```./ashmon "network-interface"``` replace "network-interface" with your network interfaces like : ```./ashmon eth0``` or ```./ashmon wlan0``` or ```./ashmon ppp0```
-
-ashmon create a new "ashmon_config" file that save lasted window position and opacity .
+Download [Latest Release](https://github.com/ashtum/ashmon/releases/latest) extract files , go to path and install ashmon by : `sudo sh install.sh`<br/>run ashmon by : `ashmon "network-interface"` replace "network-interface" with that network interface you want monitored , like : `ashmon eth0` or `ashmon wlan0` or `ashmon ppp0`
 
 **gui operations :**
 > **click** fade out window for 5 seconds .
@@ -23,10 +21,13 @@ ashmon create a new "ashmon_config" file that save lasted window position and op
 
 
 ## How to compile
-install xlib development headers : ``` sudo apt-get install libx11-dev ``` or ``` sudo yum install libX11-devel ```
+install xlib development headers : ``` sudo apt-get install libx11-dev ``` or ``` sudo yum install libX11-devel ```<br/>go to project folder and run make : ``` sudo make ```
 
-go to project folder and run make : ``` sudo make ```
+## Changelogs
+####v1.1 :
+>Edited ashmon_config path to ~/home .
 
+>Added install.sh script for easy setup.
 
 ## Copyright
 
