@@ -1,5 +1,4 @@
 /**
- * ashmon version 1.3
  * ashmon a free and open source tool for bandwidth monitoring in linux with gui .
  * (C) 2015 by Mohammad Nejati www.github.com/ashtum
  * Released under the GPL v2.0
@@ -33,7 +32,7 @@ typedef struct
     char * tx_rate_str;
     char * rx_str;
     char * tx_str;
-    char * dev_name;
+    char dev_name[256];
     int max_rate;
    
 } linker;
@@ -48,70 +47,23 @@ void * link_speed();
 char * readfile();
 char * readable_fs(u_int8_t,double);
 char * file_to_string();
-void timerFired();
+void draw_on_window();
 void change_opacity();
 void win_fade_out();
 void win_fade_in();
-
+void xlib_properties();
 
 int main(int argc, char *argv[]) {
-
-    mainlink.dev_name = argv[1];
-    if(!argv[1]) {
-        mainlink.dev_name = (char *)"eth0";
-    }
-   
-   
+	mainlink.dev_name[0] = 0;
+    if(argv[1]) {
+		strcpy(mainlink.dev_name, argv[1]);
+	}
+				
     Display *dis;
     Window win;
     GC gc;
-	XSetWindowAttributes attr;
-	XVisualInfo vinfo;
-	
     dis = XOpenDisplay(0);
-    
-    if (!XMatchVisualInfo(dis, DefaultScreen(dis),  32, TrueColor, &vinfo)){
-		XMatchVisualInfo(dis, DefaultScreen(dis),  24, TrueColor, &vinfo);
-	}
-   
-   
-    attr.colormap = XCreateColormap(dis, DefaultRootWindow(dis), vinfo.visual, AllocNone);
-    attr.border_pixel = 0;
-    attr.background_pixel = 0;  
-	win = XCreateWindow(dis, DefaultRootWindow(dis), 0, 0, 176, 145, 0, vinfo.depth, InputOutput, vinfo.visual, CWColormap | CWBorderPixel |CWBackPixel, &attr);
-    gc = XCreateGC(dis, win, 0, 0);
-    XStoreName(dis, win, (char *)"Ashtum Monitor");
-    XSelectInput(dis, win,ExposureMask | KeyPressMask | KeyReleaseMask | PointerMotionMask | ButtonPressMask | ButtonReleaseMask  | StructureNotifyMask );
-    
-   
-    
-   
-    Atom property;
-    property =  XInternAtom(dis, "_NET_WM_STATE_SKIP_TASKBAR", False);
-    XChangeProperty(dis, win, XInternAtom(dis, "_NET_WM_STATE", False), XA_ATOM, 32, PropModeReplace, (unsigned char *) &property, 1);
-    property =  XInternAtom(dis, "_NET_WM_STATE_ABOVE", False);
-    XChangeProperty(dis, win, XInternAtom(dis, "_NET_WM_STATE", False), XA_ATOM, 32, PropModeAppend, (unsigned char *) &property,1);
-    property =  XInternAtom(dis, "_NET_WM_WINDOW_TYPE_DOCK", False);
-    XChangeProperty(dis, win, XInternAtom(dis, "_NET_WM_WINDOW_TYPE", False), XA_ATOM, 32, PropModeReplace, (unsigned char *) &property,1);
-   
-    #define MWM_HINTS_FUNCTIONS     (1L << 0)
-    #define MWM_HINTS_DECORATIONS   (1L << 1)
-    #define MWM_FUNC_MOVE           (1L << 2)
-	#define MWM_DECOR_BORDER        (1L << 1)
-	typedef struct {
-		long    flags;
-		long    functions;
-		long    decorations;
-		long    input_mode;
-		long    status; } MotifWmHints;
-     
-    MotifWmHints   mwm_hints;
-    property = XInternAtom(dis, "_MOTIF_WM_HINTS", False);
-    mwm_hints.flags = MWM_HINTS_FUNCTIONS|MWM_HINTS_DECORATIONS;
-    mwm_hints.functions=  MWM_FUNC_MOVE;
-    mwm_hints.decorations = MWM_DECOR_BORDER ;
-    XChangeProperty(dis, win, property, property, 32, PropModeReplace, (unsigned char *)&mwm_hints, 5);
-   
+    xlib_properties(dis,&win,&gc);
    
     XEvent ev;
     Window window_returned;
@@ -135,6 +87,7 @@ int main(int argc, char *argv[]) {
     int opacity = 60;
     unsigned int mask_return;
     char home_patch[256];
+    
     strcpy(home_patch, getenv ("HOME"));
     strcat(home_patch,"/.ashmon_config");
     
@@ -143,8 +96,7 @@ int main(int argc, char *argv[]) {
 		if(fptr!= NULL){
 			XTranslateCoordinates( dis, win, DefaultRootWindow(dis), 0, 0, &win_x, &win_y, &window_returned );
 			XGetWindowAttributes( dis, win, &xwa );
-			
-			fprintf(fptr,"%i\n%i\n%i", opacity , win_x - xwa.x , win_y - xwa.y);
+			fprintf(fptr,"%s\n%i\n%i\n%i", mainlink.dev_name,opacity , win_x - xwa.x , win_y - xwa.y);
 			fclose(fptr);
 		}
 	} 
@@ -153,15 +105,20 @@ int main(int argc, char *argv[]) {
 	if(fptr)
 	{
 		// read config variables
-		const size_t line_size = 6;
+		const size_t line_size = 8;
 		char* line = malloc(line_size);
 		int i = 0;
 		while (fgets(line, line_size, fptr) != NULL){
+			strtok(line, "\n");
 			if(i ==0){
-				opacity = atoi(line);
+				if(!argv[1]) {
+					strcpy(mainlink.dev_name,line);
+				}
 			}else if(i==1){
-				win_x = atoi(line);
+				opacity = atoi(line);
 			}else if(i==2){
+				win_x = atoi(line);
+			}else if(i==3){
 				win_y = atoi(line);
 			}
 			i++;
@@ -171,9 +128,12 @@ int main(int argc, char *argv[]) {
 		fptr = fopen(home_patch, "wb+");
 		if(fptr){
 			chmod(home_patch,0666);
-			save_config_on_file();
 			fclose(fptr);
 		}
+	}
+	
+	if(mainlink.dev_name[0] == 0) {
+		strcpy(mainlink.dev_name,"eth0");
 	}
 	
 	// set config variables
@@ -188,7 +148,6 @@ int main(int argc, char *argv[]) {
     pthread_create(&pth,NULL,link_speed,0);
     
     
-    
     while(1) {
        
         FD_ZERO(&in_fds);
@@ -200,7 +159,7 @@ int main(int argc, char *argv[]) {
            
             ftime(&timecache);
             if((1000.0 * timecache.time + timecache.millitm) - (1000.0 * timer.time + timer.millitm) > 1000){
-                timerFired(dis, &win , &gc);
+                draw_on_window(dis, &win , &gc);
                 ftime(&timer);
             }
            
@@ -264,7 +223,7 @@ int main(int argc, char *argv[]) {
                 showed --;
             }
             ftime(&timer);
-            timerFired(dis, &win , &gc);
+            draw_on_window(dis, &win , &gc);
         }
        
     }
@@ -327,7 +286,7 @@ void * link_speed(){
 }
 
 
-void timerFired(Display * dis,Window  *win, GC * gc) {
+void draw_on_window(Display * dis,Window  *win, GC * gc) {
     if(drawable){
         int i;
         unsigned int line_h;
@@ -473,4 +432,51 @@ void win_fade_in(Display * dis,Window  *win, unsigned int * opacity){
         usleep(3000);
         XFlush(dis);
     }
+}
+
+void xlib_properties(Display * dis,Window  * win,GC * gc){
+	
+	XVisualInfo vinfo;
+    
+    if (!XMatchVisualInfo(dis, DefaultScreen(dis),  32, TrueColor, &vinfo)){
+		XMatchVisualInfo(dis, DefaultScreen(dis),  24, TrueColor, &vinfo);
+	}
+	
+	XSetWindowAttributes attr;
+    attr.colormap = XCreateColormap(dis, DefaultRootWindow(dis), vinfo.visual, AllocNone);
+    attr.border_pixel = 0;
+    attr.background_pixel = 0;  
+	*win = XCreateWindow(dis, DefaultRootWindow(dis), 0, 0, 176, 145, 0, vinfo.depth, InputOutput, vinfo.visual, CWColormap | CWBorderPixel |CWBackPixel, &attr);
+    *gc = XCreateGC(dis, *win, 0, 0);
+	
+	
+	
+    XStoreName(dis, *win, (char *)"Ashtum Monitor");
+    XSelectInput(dis, *win,ExposureMask | KeyPressMask | KeyReleaseMask | PointerMotionMask | ButtonPressMask | ButtonReleaseMask  | StructureNotifyMask );
+   
+    Atom property;
+    property =  XInternAtom(dis, "_NET_WM_STATE_SKIP_TASKBAR", False);
+    XChangeProperty(dis, *win, XInternAtom(dis, "_NET_WM_STATE", False), XA_ATOM, 32, PropModeReplace, (unsigned char *) &property, 1);
+    property =  XInternAtom(dis, "_NET_WM_STATE_ABOVE", False);
+    XChangeProperty(dis, *win, XInternAtom(dis, "_NET_WM_STATE", False), XA_ATOM, 32, PropModeAppend, (unsigned char *) &property,1);
+    property =  XInternAtom(dis, "_NET_WM_WINDOW_TYPE_DOCK", False);
+    XChangeProperty(dis, *win, XInternAtom(dis, "_NET_WM_WINDOW_TYPE", False), XA_ATOM, 32, PropModeReplace, (unsigned char *) &property,1);
+   
+    #define MWM_HINTS_FUNCTIONS     (1L << 0)
+    #define MWM_HINTS_DECORATIONS   (1L << 1)
+    #define MWM_FUNC_MOVE           (1L << 2)
+	#define MWM_DECOR_BORDER        (1L << 1)
+	typedef struct {
+		long    flags;
+		long    functions;
+		long    decorations;
+		long    input_mode;
+		long    status; } MotifWmHints;
+     
+    MotifWmHints   mwm_hints;
+    property = XInternAtom(dis, "_MOTIF_WM_HINTS", False);
+    mwm_hints.flags = MWM_HINTS_FUNCTIONS|MWM_HINTS_DECORATIONS;
+    mwm_hints.functions=  MWM_FUNC_MOVE;
+    mwm_hints.decorations = MWM_DECOR_BORDER ;
+    XChangeProperty(dis, *win, property, property, 32, PropModeReplace, (unsigned char *)&mwm_hints, 5);
 }
