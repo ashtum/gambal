@@ -24,16 +24,22 @@ Download [Latest Release](https://github.com/ashtum/ashmon/releases/latest) extr
 install xlib development headers : ``` sudo apt-get install libx11-dev ``` or ``` sudo yum install libX11-devel ```<br/>go to project folder and run make : ``` sudo make ```
 
 ## Changelogs
-####v1.4
+v1.6
+>Fix memory leak .
+
+v1.5
+>Fix dev_name bug in issue #1 (thanks to @nutpantz) .
+
+v1.4
 >Save last time used network-interface name in config file .
 
-####v1.3
+v1.3
 >Added autostart bash script .
 
-####v1.2 :
+v1.2 :
 >Added Total Download/Upload bytes .
 
-####v1.1 :
+v1.1 :
 >Edited ashmon_config path to ~/home .
 
 >Added install.sh script for easy setup.

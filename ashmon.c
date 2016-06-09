@@ -28,10 +28,10 @@ typedef struct
     unsigned int last_tx;
     unsigned int tx_rates[100];
     unsigned int rx_rates[100];
-    char * rx_rate_str;
-    char * tx_rate_str;
-    char * rx_str;
-    char * tx_str;
+    char  rx_rate_str[10];
+    char  tx_rate_str[10];
+    char rx_str[10];
+    char tx_str[10];
     char dev_name[256];
     int max_rate;
    
@@ -45,8 +45,8 @@ int drawable = 0;
 
 void * link_speed();
 char * readfile();
-char * readable_fs(u_int8_t,double);
-char * file_to_string();
+void readable_fs(char*,u_int8_t,double);
+void file_to_string();
 void draw_on_window();
 void change_opacity();
 void win_fade_out();
@@ -236,11 +236,11 @@ void * link_speed(){
         usleep(990000);
         drawable = 0;
         usleep(10000);
-        char * source;
+        char source[1024]={0};
         int i;
-        char * devs;
-        asprintf(&devs,"%s%s%s", "/sys/class/net/", mainlink.dev_name,"/statistics/rx_bytes");
-        source =file_to_string(devs);
+        char devs[1024]={0};
+	sprintf(devs,"%s%s%s", "/sys/class/net/", mainlink.dev_name,"/statistics/rx_bytes");
+        file_to_string(source,devs);
        
         for (i = 99; i !=0; i--) {
             mainlink.rx_rates[i] = mainlink.rx_rates[i-1];
@@ -250,13 +250,12 @@ void * link_speed(){
         } else {
             mainlink.rx_rates[0] = 0;
         }
-        mainlink.rx_rate_str = readable_fs(1,mainlink.rx_rates[0]);
+        readable_fs(mainlink.rx_rate_str,1,mainlink.rx_rates[0]);
         mainlink.last_rx = atoi(source);
-		mainlink.rx_str = readable_fs(0,mainlink.last_rx);
-
-
-        asprintf(&devs,"%s%s%s","/sys/class/net/", mainlink.dev_name,"/statistics/tx_bytes");
-        source =file_to_string(devs);
+	readable_fs(mainlink.rx_str,0,mainlink.last_rx);
+	
+	sprintf(devs,"%s%s%s", "/sys/class/net/", mainlink.dev_name,"/statistics/rx_bytes");
+        file_to_string(source,devs);
         for (i = 99; i !=0; i--) {
             mainlink.tx_rates[i] = mainlink.tx_rates[i-1];
         }
@@ -266,9 +265,9 @@ void * link_speed(){
         } else {
             mainlink.tx_rates[0] = 0;
         }
-        mainlink.tx_rate_str = readable_fs(1,mainlink.tx_rates[0]);
+        readable_fs(mainlink.tx_rate_str,1,mainlink.tx_rates[0]);
         mainlink.last_tx = atoi(source);
-        mainlink.tx_str = readable_fs(0,mainlink.last_tx);
+        readable_fs(mainlink.tx_str,0,mainlink.last_tx);
         
         mainlink.max_rate = 0;
         for(i=0; i<100; i++)
@@ -308,8 +307,8 @@ void draw_on_window(Display * dis,Window  *win, GC * gc) {
         XDrawLine(dis, *win, *gc, 5, 106, 170, 106);   
 		XDrawRectangle(dis, *win, *gc, 0, 0, 175, 144);
         for (i=0; i<5; i++) {
-            char * label_str ;
-            label_str = readable_fs(1,(6.00-i)*(mainlink.max_rate/6.00));
+            char label_str[10];
+            readable_fs(label_str,1,(6.00-i)*(mainlink.max_rate/6.00));
 
             XDrawString(dis, *win, *gc, 5, i * 100/5 +15, label_str, strlen(label_str));
         }
@@ -369,8 +368,7 @@ void draw_on_window(Display * dis,Window  *win, GC * gc) {
 }
 
 
-char * file_to_string(char * address){
-    char * buffer = "";
+void file_to_string(char * buffer,char * address){
     long length;
     FILE * f = fopen (address, "rb");
 
@@ -379,33 +377,27 @@ char * file_to_string(char * address){
         fseek (f, 0, SEEK_END);
         length = ftell (f);
         fseek (f, 0, SEEK_SET);
-        buffer = malloc (length);
         if (buffer)
         {
             fread (buffer, 1, length, f);
         }
         fclose (f);
     }
-   
-    return buffer;
 }
 
-char * readable_fs(u_int8_t pers,double size) {
-    char * buf=(char *) malloc(sizeof(char) * 10);
+void readable_fs(char * p_buff,u_int8_t pers,double size) {
     int i = 0;
-    char* units[] = {"B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
+    char * units[] = {"B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
     while (size > 1024) {
         size /= 1024;
         i++;
     }
 
 	if(pers){
-		sprintf(buf, "%.*f %s/s", i, size, units[i]);
+		sprintf(p_buff, "%.*f %s/s", i, size, units[i]);
 	}else{
-		sprintf(buf, "%.*f %s", i, size, units[i]);
+		sprintf(p_buff, "%.*f %s", i, size, units[i]);
 	}
-    
-    return buf;
 }
 
 void change_opacity(Display * dis,Window  *win, unsigned int * opacity){
@@ -445,7 +437,7 @@ void xlib_properties(Display * dis,Window  * win,GC * gc){
 	XSetWindowAttributes attr;
     attr.colormap = XCreateColormap(dis, DefaultRootWindow(dis), vinfo.visual, AllocNone);
     attr.border_pixel = 0;
-    attr.background_pixel = 0;  
+    attr.background_pixel = 0;
 	*win = XCreateWindow(dis, DefaultRootWindow(dis), 0, 0, 176, 145, 0, vinfo.depth, InputOutput, vinfo.visual, CWColormap | CWBorderPixel |CWBackPixel, &attr);
     *gc = XCreateGC(dis, *win, 0, 0);
 	
