@@ -13,4 +13,4 @@ distclean: clean
 	rm -f *~ \#* core
 
 ashmon: ashmon.c
-	$(CC) $(CFLAGS) -o $@ $< $(LIBS)
+	$(CC) $(CFLAGS) window.c nic.c -o $@ $< $(LIBS)
