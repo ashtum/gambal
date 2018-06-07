@@ -7,7 +7,7 @@ A light , free and open source graphical network traffic monitor in linux that d
 
 
 ## Build
-install xlib development headers : ``` sudo apt-get install libx11-dev ``` or ``` sudo yum install libX11-devel ```<br/>go to project folder and run make : ``` sudo make ```
+install xlib development headers : ``` sudo apt-get install libx11-dev ``` or ``` sudo yum install libX11-devel ```<br/>go to project folder and run make : ``` make ```
 
 ## Usage
 Install ashmon in /usr/bin folder : `sudo sh install.sh`<br/>Run ashmon : `ashmon "network-interface"` replace "network-interface" with that network interface you want monitored , like : `ashmon eth0` or `ashmon wlan0` or `ashmon ppp0`<br/>If you want ashmon start automatically on system startup just run autostart.sh script at the same path : `sudo sh autostart.sh`
@@ -22,10 +22,13 @@ Install ashmon in /usr/bin folder : `sudo sh install.sh`<br/>Run ashmon : `ashmo
 > **right click** exit application.
 
 ## Changelogs
+v1.8
+>Fixing exposure freeze bug.
+
 v1.7
->spliting project in different files.
->changing x11 configs and draw functions.
->using a precise timer for 1 second interrupts.
+>Spliting project in different files.
+>Changing x11 configs and draw functions.
+>Using a precise timer for 1 second interrupts.
 
 v1.6
 >Fix memory leak.

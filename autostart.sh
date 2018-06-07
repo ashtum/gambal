@@ -4,5 +4,7 @@ if [ ! -d ${USER_HOME}/.config/autostart ]
 then
     mkdir -p ${USER_HOME}/.config/autostart
 fi
-echo -e "[Desktop Entry]\nType=Application\nExec=ashmon" > ${USER_HOME}/.config/autostart/ashmon.desktop
+echo "[Desktop Entry]" > ${USER_HOME}/.config/autostart/ashmon.desktop
+echo "Type=Application" >> ${USER_HOME}/.config/autostart/ashmon.desktop
+echo "Exec=ashmon" >> ${USER_HOME}/.config/autostart/ashmon.desktop
 echo "ashmon configured as an autostart application successfuly."

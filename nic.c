@@ -1,7 +1,7 @@
+#include "nic.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
-#include "nic.h"
 
 void nic_init(struct nic_statistics *nic_s)
 {
@@ -53,7 +53,7 @@ void nic_update_statistics(struct nic_statistics *nic_s)
     {
         if (nic_s->rx_rates[i] > nic_s->bigest_rate)
             nic_s->bigest_rate = nic_s->rx_rates[i];
-            
+
         if (nic_s->tx_rates[i] > nic_s->bigest_rate)
             nic_s->bigest_rate = nic_s->tx_rates[i];
     }

@@ -1,5 +1,11 @@
 #include "window.h"
 #include "ashmon.h"
+#include <X11/Xutil.h>
+#include <X11/Xatom.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 
 void window_init(struct window_display_struct *win_prop)
 {
@@ -16,11 +22,11 @@ void window_init(struct window_display_struct *win_prop)
     attr.background_pixel = 0;
     win_prop->window = XCreateWindow(win_prop->display, DefaultRootWindow(win_prop->display), 0, 0, 176, 145, 0,
                                      vinfo.depth, InputOutput, vinfo.visual, CWColormap | CWBorderPixel | CWBackPixel, &attr);
-                                     
+
     win_prop->gc = XCreateGC(win_prop->display, win_prop->window, 0, 0);
 
     XStoreName(win_prop->display, win_prop->window, (char *)"ashmon");
-    XSelectInput(win_prop->display, win_prop->window, PointerMotionMask | ButtonPressMask | ButtonReleaseMask);
+    XSelectInput(win_prop->display, win_prop->window, ExposureMask | PointerMotionMask | ButtonPressMask | ButtonReleaseMask);
 
     Atom property;
     property = XInternAtom(win_prop->display, "_NET_WM_STATE_SKIP_TASKBAR", False);
@@ -29,9 +35,9 @@ void window_init(struct window_display_struct *win_prop)
     XChangeProperty(win_prop->display, win_prop->window, XInternAtom(win_prop->display, "_NET_WM_WINDOW_TYPE", False),
                     XA_ATOM, 32, PropModeReplace, (unsigned char *)&property, 1);
 
-    window_update_opacity(win_prop);
     XMoveWindow(win_prop->display, win_prop->window, win_prop->last_window_x, win_prop->last_window_y);
     XMapWindow(win_prop->display, win_prop->window);
+    window_update_opacity(win_prop);
 }
 
 void window_fadeout_fade_in_with_delay(struct window_display_struct *win_prop, int delay)
@@ -71,6 +77,12 @@ void window_redraw(struct window_display_struct *win_prop, struct nic_statistics
     const int background_color = 0xDDDDDDDD;
     const int primary_color = 0xFF1A90FF;
 
+    XEvent exppp;
+    memset(&exppp, 0, sizeof(exppp));
+    exppp.type = Expose;
+    exppp.xexpose.window = win_prop->window;
+    XSendEvent(win_prop->display, win_prop->window, False, ExposureMask, &exppp);
+
     // remove shapes
     XSetForeground(win_prop->display, win_prop->gc, background_color);
     XFillRectangle(win_prop->display, win_prop->window, win_prop->gc, 0, 0, 176, 145);
@@ -109,7 +121,7 @@ void window_redraw(struct window_display_struct *win_prop, struct nic_statistics
         if (line_h > 0 && nic_s->tx_rates[i] >= nic_s->rx_rates[i])
             XDrawLine(win_prop->display, win_prop->window, win_prop->gc, 70 + (100 - i), 105, 70 + (100 - i), 5 + (100 - line_h));
     }
-
+    
     // green shape draws
     XSetForeground(win_prop->display, win_prop->gc, download_color);
     XDrawString(win_prop->display, win_prop->window, win_prop->gc, 5, 123, "D:", 2);

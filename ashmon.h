@@ -1,13 +1,6 @@
 #ifndef ASHMON_H
 #define ASHMON_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <pthread.h>
-#include <unistd.h>
-#include <sys/stat.h>
-
 #include "nic.h"
 #include "window.h"
 

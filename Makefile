@@ -4,13 +4,19 @@ CC	= gcc
 CFLAGS	= -Wall
 LIBS	= -lX11 -pthread
 
-all:	$(PROGS)
+default: $(PROGS)
+
+all: $(PROGS) debug
+
+$(PROGS): ashmon.c
+	$(CC) $(CFLAGS) window.c nic.c -o $@ $< $(LIBS)
+
+debug: ashmon.c
+	$(CC) $(CFLAGS) -g window.c nic.c -o $@ $< $(LIBS)
 
 clean:
-	rm -f $(PROGS)
+	rm -f $(PROGS) debug
 
 distclean: clean
 	rm -f *~ \#* core
-
-ashmon: ashmon.c
-	$(CC) $(CFLAGS) window.c nic.c -o $@ $< $(LIBS)
+	

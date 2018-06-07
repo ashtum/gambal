@@ -13,10 +13,14 @@
 #include "ashmon.h"
 #include "nic.h"
 #include "window.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <pthread.h>
+#include <sys/stat.h>
 
 struct window_display_struct window_properties;
 struct nic_statistics main_nic;
-
 
 int main(int argc, char *argv[])
 {
