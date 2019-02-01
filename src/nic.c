@@ -3,6 +3,23 @@
 #include <stdlib.h>
 #include <limits.h>
 
+static long parse_str_file_to_long_int(char *file_address)
+{
+    FILE *file = fopen(file_address, "rb");
+    if (file)
+    {
+        fseek(file, 0, SEEK_END);
+        long length;
+        length = ftell(file);
+        fseek(file, 0, SEEK_SET);
+        char tmp_string[length];
+        fread(tmp_string, 1, length, file);
+        fclose(file);
+        return atol(tmp_string);
+    }
+    return 0;
+}
+
 void nic_init(struct nic_statistics *nic_s)
 {
     int i;
@@ -57,21 +74,4 @@ void nic_update_statistics(struct nic_statistics *nic_s)
         if (nic_s->tx_rates[i] > nic_s->bigest_rate)
             nic_s->bigest_rate = nic_s->tx_rates[i];
     }
-}
-
-long parse_str_file_to_long_int(char *file_address)
-{
-    FILE *file = fopen(file_address, "rb");
-    if (file)
-    {
-        fseek(file, 0, SEEK_END);
-        long length;
-        length = ftell(file);
-        fseek(file, 0, SEEK_SET);
-        char tmp_string[length];
-        fread(tmp_string, 1, length, file);
-        fclose(file);
-        return atol(tmp_string);
-    }
-    return 0;
 }

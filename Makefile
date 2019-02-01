@@ -1,22 +1,23 @@
-PROGS = ashmon
-
-CC	= gcc
-CFLAGS	= -Wall
-LIBS	= -lX11 -pthread
+PROGS          = ashmon
+CC	           = gcc
+CFLAGS	       = -Wall -Wno-unused-result
+CFLAGS_RELEASE = -O3
+CFLAGS_DEBUG   = -g3 -O0
+LIBS	       = -lX11 -pthread
+SRCS           = src/*.c
 
 default: $(PROGS)
 
 all: $(PROGS) debug
 
-$(PROGS): ashmon.c
-	$(CC) $(CFLAGS) window.c nic.c -o $@ $< $(LIBS)
+$(PROGS):
+	@mkdir -p bin
+	$(CC) $(CFLAGS) $(CFLAGS_RELEASE) -o bin/$@ $(SRCS) $(LIBS)
 
-debug: ashmon.c
-	$(CC) $(CFLAGS) -g window.c nic.c -o $@ $< $(LIBS)
+debug:
+	@mkdir -p bin
+	$(CC) $(CFLAGS) $(CFLAGS_DEBUG) -o bin/$@ $(SRCS) $(LIBS)
 
 clean:
-	rm -f $(PROGS) debug
-
-distclean: clean
-	rm -f *~ \#* core
+	rm -fr bin
 	

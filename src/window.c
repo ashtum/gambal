@@ -7,6 +7,48 @@
 #include <unistd.h>
 #include <string.h>
 
+static void window_update_opacity(struct window_display_struct *win_prop)
+{
+    unsigned int real_opacity = 0xFFFFFFFF;
+    real_opacity *= (win_prop->opacity / 100.0);
+
+    XChangeProperty(win_prop->display, win_prop->window, XInternAtom(win_prop->display, "_NET_WM_WINDOW_OPACITY", False),
+                    XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&real_opacity, 1L);
+    XFlush(win_prop->display);
+}
+
+static void window_fadeout_fade_in_with_delay(struct window_display_struct *win_prop, int delay)
+{
+    int last_opacity = win_prop->opacity;
+    while (win_prop->opacity > 0)
+    {
+        win_prop->opacity--;
+        window_update_opacity(win_prop);
+        usleep(3000);
+    }
+    XUnmapWindow(win_prop->display, win_prop->window);
+    sleep(delay);
+    win_prop->opacity = last_opacity;
+    window_update_opacity(win_prop);
+    XMapWindow(win_prop->display, win_prop->window);
+}
+
+static void long_rate_to_readable_str(char *p_buff, char per_second, double rate)
+{
+    int i = 0;
+    char *units[] = {"B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
+    while (rate > 1024)
+    {
+        rate /= 1024;
+        i++;
+    }
+
+    if (per_second)
+        sprintf(p_buff, "%.*f %s/s", i, rate, units[i]);
+    else
+        sprintf(p_buff, "%.*f %s", i, rate, units[i]);
+}
+
 void window_init(struct window_display_struct *win_prop)
 {
     XInitThreads();
@@ -38,32 +80,6 @@ void window_init(struct window_display_struct *win_prop)
     XMoveWindow(win_prop->display, win_prop->window, win_prop->last_window_x, win_prop->last_window_y);
     XMapWindow(win_prop->display, win_prop->window);
     window_update_opacity(win_prop);
-}
-
-void window_fadeout_fade_in_with_delay(struct window_display_struct *win_prop, int delay)
-{
-    int last_opacity = win_prop->opacity;
-    while (win_prop->opacity > 0)
-    {
-        win_prop->opacity--;
-        window_update_opacity(win_prop);
-        usleep(3000);
-    }
-    XUnmapWindow(win_prop->display, win_prop->window);
-    sleep(delay);
-    win_prop->opacity = last_opacity;
-    window_update_opacity(win_prop);
-    XMapWindow(win_prop->display, win_prop->window);
-}
-
-void window_update_opacity(struct window_display_struct *win_prop)
-{
-    unsigned int real_opacity = 0xFFFFFFFF;
-    real_opacity *= (win_prop->opacity / 100.0);
-
-    XChangeProperty(win_prop->display, win_prop->window, XInternAtom(win_prop->display, "_NET_WM_WINDOW_OPACITY", False),
-                    XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&real_opacity, 1L);
-    XFlush(win_prop->display);
 }
 
 void window_redraw(struct window_display_struct *win_prop, struct nic_statistics *nic_s)
@@ -152,22 +168,6 @@ void window_redraw(struct window_display_struct *win_prop, struct nic_statistics
             XDrawLine(win_prop->display, win_prop->window, win_prop->gc, 70 + (100 - i), 105, 70 + (100 - i), 5 + (100 - line_h));
     }
     XFlush(win_prop->display);
-}
-
-void long_rate_to_readable_str(char *p_buff, char per_second, double rate)
-{
-    int i = 0;
-    char *units[] = {"B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
-    while (rate > 1024)
-    {
-        rate /= 1024;
-        i++;
-    }
-
-    if (per_second)
-        sprintf(p_buff, "%.*f %s/s", i, rate, units[i]);
-    else
-        sprintf(p_buff, "%.*f %s", i, rate, units[i]);
 }
 
 void window_blocking_event_handler(struct window_display_struct *win_prop, struct nic_statistics *nic_s, char *cfg_path)

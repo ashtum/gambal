@@ -22,6 +22,9 @@
 struct window_display_struct window_properties;
 struct nic_statistics main_nic;
 
+static char init_configs(struct window_display_struct *win_prop, struct nic_statistics *nic_s, char *cfg_path);
+static void *refresher(void *p);
+
 int main(int argc, char *argv[])
 {
 
@@ -49,13 +52,13 @@ int main(int argc, char *argv[])
     nic_init(&main_nic);
 
     pthread_t link_updater;
-    pthread_create(&link_updater, NULL, refrasher, NULL);
+    pthread_create(&link_updater, NULL, refresher, NULL);
 
     window_blocking_event_handler(&window_properties, &main_nic, config_patch);
     return 0;
 }
 
-void *refrasher(void *p)
+static void *refresher(void *p)
 {
     while (1)
     {
@@ -68,6 +71,7 @@ void *refrasher(void *p)
 
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &one_secound, NULL);
     }
+    return NULL;
 }
 
 void save_configs_in_file(struct window_display_struct *win_prop, struct nic_statistics *nic_s, char *cfg_path)
@@ -84,7 +88,7 @@ void save_configs_in_file(struct window_display_struct *win_prop, struct nic_sta
     }
 }
 
-char init_configs(struct window_display_struct *win_prop, struct nic_statistics *nic_s, char *cfg_path)
+static char init_configs(struct window_display_struct *win_prop, struct nic_statistics *nic_s, char *cfg_path)
 {
     FILE *fptr = fopen(cfg_path, "r");
     if (fptr)
@@ -97,7 +101,7 @@ char init_configs(struct window_display_struct *win_prop, struct nic_statistics 
             switch (i)
             {
             case 0:
-                strcpy(main_nic.dev_name, line);
+                strcpy(nic_s->dev_name, line);
                 break;
             case 1:
                 win_prop->opacity = atoi(line);

@@ -17,6 +17,5 @@ struct nic_statistics
 
 void nic_init(struct nic_statistics *nic_s);
 void nic_update_statistics(struct nic_statistics *nic_s);
-long parse_str_file_to_long_int(char *file_address);
 
 #endif
