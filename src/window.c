@@ -109,7 +109,7 @@ void window_redraw(struct window_display_struct *win_prop, struct nic_statistics
     XDrawRectangle(win_prop->display, win_prop->window, win_prop->gc, 0, 0, 175, 144);
     for (i = 0; i < 5; i++)
     {
-        char str_buffer[10];
+        char str_buffer[32];
         long_rate_to_readable_str(str_buffer, 1, (6.00 - i) * (nic_s->bigest_rate / 6.00));
         XDrawString(win_prop->display, win_prop->window, win_prop->gc, 5, i * 100 / 5 + 15, str_buffer, strlen(str_buffer));
     }
