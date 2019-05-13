@@ -1,29 +1,29 @@
 # ashmon
 [![Build Status](https://travis-ci.org/ashtum/ashmon.svg?branch=master)](https://travis-ci.org/ashtum/ashmon)
 
-A light , free and open source graphical network traffic monitor in linux that directly use xlib for draw graphs so work fine on any linux distributions and don't need extra gui library.
+A light , free and open source graphical network traffic monitor for linux that directly uses xlib for drawing graphs that means it works fine on any linux distribution and doesn't need extra library for gui.
 
 ![ashmon_shot](https://cloud.githubusercontent.com/assets/11743154/6994226/55522172-db26-11e4-9648-7f3d6f932142.png)
 
 
 ## Build
-install xlib development headers : ``` sudo apt-get install libx11-dev ``` or ``` sudo yum install libX11-devel ```<br/>go to project folder and run make : ``` make ```
+To build ashmon you need install xlib development headers with : ``` sudo apt-get install libx11-dev ``` or ``` sudo yum install libX11-devel ```<br/>Then go to project folder and build project with : ``` make ``` command.
 
 ## Usage
-Install ashmon in /usr/bin folder : `sudo sh install.sh`<br/>Run ashmon : `ashmon "network-interface"` replace "network-interface" with that network interface you want monitored , like : `ashmon eth0` or `ashmon wlan0` or `ashmon ppp0`<br/>If you want ashmon start automatically on system startup just run autostart.sh script at the same path : `sudo sh autostart.sh`
+Install ashmon in /usr/bin folder : `sudo sh install.sh`<br/>Run ashmon : `ashmon network-interface-name` replace "network-interface-name" with that network interface you want monitor, like : `ashmon eth0` or `ashmon wlan0` or `ashmon ppp0`<br/>If you want ashmon start automatically on system startup just run autostart.sh script at the same path with : `sudo sh autostart.sh`
 
 ## Gui operations:
-> **click** fade out window for 5 seconds.
+> **click** fades out window for 5 seconds.
 
-> **click and drag** move window everywhere you want.
+> **click and drag** moves window everywhere you want.
 
-> **mouse whele up/down** change window opacity.
+> **mouse whele up/down** changes window opacity.
 
-> **right click** exit application.
+> **right click** exits application.
 
 ## Changelogs
 v1.8
->Fixing exposure freeze bug.
+>Fix exposure freeze bug.
 
 v1.7
 >Spliting project in different files.
