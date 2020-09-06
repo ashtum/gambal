@@ -122,7 +122,7 @@ static char init_configs(struct window_display_struct *win_prop, struct nic_stat
     {
         win_prop->last_window_x = 512;
         win_prop->last_window_y = 512;
-        win_prop->opacity = 95;
+        win_prop->opacity = 90;
         return 0;
     }
 }

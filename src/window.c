@@ -33,20 +33,20 @@ static void window_fadeout_fade_in_with_delay(struct window_display_struct *win_
     XMapWindow(win_prop->display, win_prop->window);
 }
 
-static void long_rate_to_readable_str(char *p_buff, char per_second, double rate)
+static void long_rate_to_readable_str(char * prefix, char *p_buff, char per_second, double rate)
 {
     int i = 0;
     char *units[] = {"B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
-    while (rate > 1024)
+    while (rate > 1000)
     {
-        rate /= 1024;
+        rate /= 1000;
         i++;
     }
 
     if (per_second)
-        sprintf(p_buff, "%.*f %s/s", i, rate, units[i]);
+        sprintf(p_buff, "%s%.*f %s/s", prefix, i, rate, units[i]);
     else
-        sprintf(p_buff, "%.*f %s", i, rate, units[i]);
+        sprintf(p_buff, "%s%.*f %s", prefix, i, rate, units[i]);
 }
 
 void window_init(struct window_display_struct *win_prop)
@@ -62,7 +62,7 @@ void window_init(struct window_display_struct *win_prop)
     attr.colormap = XCreateColormap(win_prop->display, DefaultRootWindow(win_prop->display), vinfo.visual, AllocNone);
     attr.border_pixel = 0;
     attr.background_pixel = 0;
-    win_prop->window = XCreateWindow(win_prop->display, DefaultRootWindow(win_prop->display), 0, 0, 176, 145, 0,
+    win_prop->window = XCreateWindow(win_prop->display, DefaultRootWindow(win_prop->display), 0, 0, 176, 87, 0,
                                      vinfo.depth, InputOutput, vinfo.visual, CWColormap | CWBorderPixel | CWBackPixel, &attr);
 
     win_prop->gc = XCreateGC(win_prop->display, win_prop->window, 0, 0);
@@ -70,15 +70,13 @@ void window_init(struct window_display_struct *win_prop)
     XStoreName(win_prop->display, win_prop->window, (char *)"ashmon");
     XSelectInput(win_prop->display, win_prop->window, ExposureMask | PointerMotionMask | ButtonPressMask | ButtonReleaseMask);
 
-    Atom property;
-    property = XInternAtom(win_prop->display, "_NET_WM_STATE_SKIP_TASKBAR", False);
-    property = XInternAtom(win_prop->display, "_NET_WM_STATE_ABOVE", False);
-    property = XInternAtom(win_prop->display, "_NET_WM_WINDOW_TYPE_DOCK", False);
+    Atom property = XInternAtom(win_prop->display, "_NET_WM_WINDOW_TYPE_DOCK", False);
     XChangeProperty(win_prop->display, win_prop->window, XInternAtom(win_prop->display, "_NET_WM_WINDOW_TYPE", False),
                     XA_ATOM, 32, PropModeReplace, (unsigned char *)&property, 1);
 
     XMoveWindow(win_prop->display, win_prop->window, win_prop->last_window_x, win_prop->last_window_y);
     XMapWindow(win_prop->display, win_prop->window);
+    XSetLineAttributes(win_prop->display, win_prop->gc, 1, LineSolid, CapNotLast, JoinMiter);
     window_update_opacity(win_prop);
 }
 
@@ -90,7 +88,7 @@ void window_redraw(struct window_display_struct *win_prop, struct nic_statistics
     const int upload_color = 0xFFDC143C;
     const int download_color = 0xFF228B22;
     const int upload_download_color = 0xFFFFA500;
-    const int background_color = 0xDDDDDDDD;
+    const int background_color = 0xEEEEEEEE;
     const int primary_color = 0xFF1A90FF;
 
     XEvent exppp;
@@ -101,71 +99,67 @@ void window_redraw(struct window_display_struct *win_prop, struct nic_statistics
 
     // remove shapes
     XSetForeground(win_prop->display, win_prop->gc, background_color);
-    XFillRectangle(win_prop->display, win_prop->window, win_prop->gc, 0, 0, 176, 145);
+    XFillRectangle(win_prop->display, win_prop->window, win_prop->gc, 0, 0, 176, 87);
 
     // primry shape draws
     XSetForeground(win_prop->display, win_prop->gc, primary_color);
-    XDrawLine(win_prop->display, win_prop->window, win_prop->gc, 5, 106, 170, 106);
-    XDrawRectangle(win_prop->display, win_prop->window, win_prop->gc, 0, 0, 175, 144);
-    for (i = 0; i < 5; i++)
+    XDrawLine(win_prop->display, win_prop->window, win_prop->gc, 5, 55, 171, 55);
+    XDrawRectangle(win_prop->display, win_prop->window, win_prop->gc, 0, 0, 175, 86);
+    for (i = 0; i < 3; i++)
     {
         char str_buffer[32];
-        long_rate_to_readable_str(str_buffer, 1, (6.00 - i) * (nic_s->bigest_rate / 6.00));
-        XDrawString(win_prop->display, win_prop->window, win_prop->gc, 5, i * 100 / 5 + 15, str_buffer, strlen(str_buffer));
+        long_rate_to_readable_str("", str_buffer, 1, (3.0 - i) * (nic_s->bigest_rate / 3.0));
+        XDrawString(win_prop->display, win_prop->window, win_prop->gc, 5, 6 + i * 8 + (i+1) * 9, str_buffer, strlen(str_buffer));
     }
 
-    XDrawString(win_prop->display, win_prop->window, win_prop->gc, 92, 140, "TU:", 3);
-    long_rate_to_readable_str(str_buffer, 0, nic_s->total_tx_bytes);
-    XDrawString(win_prop->display, win_prop->window, win_prop->gc, 113, 140, str_buffer, strlen(str_buffer));
+    long_rate_to_readable_str("TU ", str_buffer, 0, nic_s->total_tx_bytes);
+    XDrawString(win_prop->display, win_prop->window, win_prop->gc, 88, 83, str_buffer, strlen(str_buffer));
 
-    XDrawString(win_prop->display, win_prop->window, win_prop->gc, 5, 140, "TD:", 3);
-    long_rate_to_readable_str(str_buffer, 0, nic_s->total_rx_bytes);
-    XDrawString(win_prop->display, win_prop->window, win_prop->gc, 25, 140, str_buffer, strlen(str_buffer));
+    long_rate_to_readable_str("TD ", str_buffer, 0, nic_s->total_rx_bytes);
+    XDrawString(win_prop->display, win_prop->window, win_prop->gc, 5, 83, str_buffer, strlen(str_buffer));
 
     // red shape draws
     XSetForeground(win_prop->display, win_prop->gc, upload_color);
-    XDrawString(win_prop->display, win_prop->window, win_prop->gc, 92, 123, "U:", 2);
-    long_rate_to_readable_str(str_buffer, 1, nic_s->tx_rates[0]);
-    XDrawString(win_prop->display, win_prop->window, win_prop->gc, 106, 123, str_buffer, strlen(str_buffer));
-    for (i = 0; i < 99; i++)
+    long_rate_to_readable_str("U  ", str_buffer, 1, nic_s->tx_rates[0]);
+    XDrawString(win_prop->display, win_prop->window, win_prop->gc, 88, 69, str_buffer, strlen(str_buffer));
+    for (i = 0; i < 100; i++)
     {
         if (nic_s->tx_rates[i] > 0)
-            line_h = ((nic_s->tx_rates[i]) / (nic_s->bigest_rate + 0.00)) * 100.0;
+            line_h = ((nic_s->tx_rates[i]) / (nic_s->bigest_rate * 1.0)) * 50.0;
         else
             line_h = 0;
 
         if (line_h > 0 && nic_s->tx_rates[i] >= nic_s->rx_rates[i])
-            XDrawLine(win_prop->display, win_prop->window, win_prop->gc, 70 + (100 - i), 105, 70 + (100 - i), 5 + (100 - line_h));
+            XDrawLine(win_prop->display, win_prop->window, win_prop->gc, 70 + (100 - i), 55, 70 + (100 - i), 5 + (50 - line_h));
     }
     
     // green shape draws
     XSetForeground(win_prop->display, win_prop->gc, download_color);
-    XDrawString(win_prop->display, win_prop->window, win_prop->gc, 5, 123, "D:", 2);
-    long_rate_to_readable_str(str_buffer, 1, nic_s->rx_rates[0]);
-    XDrawString(win_prop->display, win_prop->window, win_prop->gc, 18, 123, str_buffer, strlen(str_buffer));
-    for (i = 0; i < 99; i++)
+    long_rate_to_readable_str("D  ", str_buffer, 1, nic_s->rx_rates[0]);
+    XDrawString(win_prop->display, win_prop->window, win_prop->gc, 5, 69, str_buffer, strlen(str_buffer));
+    for (i = 0; i < 100; i++)
     {
         if (nic_s->rx_rates[i] > 0)
-            line_h = ((nic_s->rx_rates[i]) / (nic_s->bigest_rate + 0.00)) * 100.0;
+            line_h = ((nic_s->rx_rates[i]) / (nic_s->bigest_rate * 1.0)) * 50.0;
         else
             line_h = 0;
 
         if (line_h > 0 && nic_s->tx_rates[i] < nic_s->rx_rates[i])
-            XDrawLine(win_prop->display, win_prop->window, win_prop->gc, 70 + (100 - i), 105, 70 + (100 - i), 5 + (100 - line_h));
+            XDrawLine(win_prop->display, win_prop->window, win_prop->gc, 70 + (100 - i), 55, 70 + (100 - i), 5 + (50 - line_h));
     }
 
     // yelow shape draws
     XSetForeground(win_prop->display, win_prop->gc, upload_download_color);
-    for (i = 0; i < 99; i++)
+    for (i = 0; i < 100; i++)
     {
 
         if (nic_s->tx_rates[i] > nic_s->rx_rates[i])
-            line_h = (nic_s->rx_rates[i] / (nic_s->bigest_rate + 0.00)) * 100.0;
+            line_h = (nic_s->rx_rates[i] / (nic_s->bigest_rate * 1.0)) * 50.0;
         else
-            line_h = (nic_s->tx_rates[i] / (nic_s->bigest_rate + 0.00)) * 100.0;
+            line_h = (nic_s->tx_rates[i] / (nic_s->bigest_rate * 1.0)) * 50.0;
 
         if (line_h > 0)
-            XDrawLine(win_prop->display, win_prop->window, win_prop->gc, 70 + (100 - i), 105, 70 + (100 - i), 5 + (100 - line_h));
+            XDrawLine(win_prop->display, win_prop->window, win_prop->gc, 70 + (100 - i), 55, 70 + (100 - i), 5 + (50 - line_h));
     }
     XFlush(win_prop->display);
 }
@@ -209,7 +203,7 @@ void window_blocking_event_handler(struct window_display_struct *win_prop, struc
             }
             else if (ev.xbutton.button == Button5)
             {
-                if (win_prop->opacity > 15)
+                if (win_prop->opacity >= 20)
                 {
                     win_prop->opacity -= 10;
                     window_update_opacity(win_prop);
