@@ -17,7 +17,7 @@ static void window_update_opacity(struct window_display_struct *win_prop)
     XFlush(win_prop->display);
 }
 
-static void window_fadeout_fade_in_with_delay(struct window_display_struct *win_prop, int delay)
+static void window_fadeout_fadein_with_delay(struct window_display_struct *win_prop, int delay)
 {
     int last_opacity = win_prop->opacity;
     while (win_prop->opacity > 0)
@@ -74,6 +74,9 @@ void window_init(struct window_display_struct *win_prop)
     XChangeProperty(win_prop->display, win_prop->window, XInternAtom(win_prop->display, "_NET_WM_WINDOW_TYPE", False),
                     XA_ATOM, 32, PropModeReplace, (unsigned char *)&property, 1);
 
+    Font font = XLoadFont(win_prop->display, "6x13");
+    XSetFont(win_prop->display, win_prop->gc, font);
+
     XMoveWindow(win_prop->display, win_prop->window, win_prop->last_window_x, win_prop->last_window_y);
     XMapWindow(win_prop->display, win_prop->window);
     XSetLineAttributes(win_prop->display, win_prop->gc, 1, LineSolid, CapNotLast, JoinMiter);
@@ -83,7 +86,6 @@ void window_init(struct window_display_struct *win_prop)
 void window_redraw(struct window_display_struct *win_prop, struct nic_statistics *nic_s)
 {
     int i;
-    unsigned int line_h;
     char str_buffer[32];
     const int upload_color = 0xFFDC143C;
     const int download_color = 0xFF228B22;
@@ -107,9 +109,8 @@ void window_redraw(struct window_display_struct *win_prop, struct nic_statistics
     XDrawRectangle(win_prop->display, win_prop->window, win_prop->gc, 0, 0, 175, 86);
     for (i = 0; i < 3; i++)
     {
-        char str_buffer[32];
-        long_rate_to_readable_str("", str_buffer, 1, (3.0 - i) * (nic_s->bigest_rate / 3.0));
-        XDrawString(win_prop->display, win_prop->window, win_prop->gc, 5, 6 + i * 8 + (i+1) * 9, str_buffer, strlen(str_buffer));
+        long_rate_to_readable_str("", str_buffer, 1, (3 - i) / 3.0 * nic_s->bigest_rate);
+        XDrawString(win_prop->display, win_prop->window, win_prop->gc, 5, ((i+1) * 17) - 2, str_buffer, strlen(str_buffer));
     }
 
     long_rate_to_readable_str("TU ", str_buffer, 0, nic_s->total_tx_bytes);
@@ -124,13 +125,12 @@ void window_redraw(struct window_display_struct *win_prop, struct nic_statistics
     XDrawString(win_prop->display, win_prop->window, win_prop->gc, 88, 69, str_buffer, strlen(str_buffer));
     for (i = 0; i < 100; i++)
     {
-        if (nic_s->tx_rates[i] > 0)
-            line_h = ((nic_s->tx_rates[i]) / (nic_s->bigest_rate * 1.0)) * 50.0;
-        else
-            line_h = 0;
+        unsigned int line_h = 0;
+        if (nic_s->bigest_rate > 0)
+            line_h = nic_s->tx_rates[i] * 50 / nic_s->bigest_rate;
 
-        if (line_h > 0 && nic_s->tx_rates[i] >= nic_s->rx_rates[i])
-            XDrawLine(win_prop->display, win_prop->window, win_prop->gc, 70 + (100 - i), 55, 70 + (100 - i), 5 + (50 - line_h));
+        if (nic_s->tx_rates[i] >= nic_s->rx_rates[i])
+            XDrawLine(win_prop->display, win_prop->window, win_prop->gc, 170 - i, 55, 170 - i, 55 - line_h);
     }
     
     // green shape draws
@@ -139,27 +139,28 @@ void window_redraw(struct window_display_struct *win_prop, struct nic_statistics
     XDrawString(win_prop->display, win_prop->window, win_prop->gc, 5, 69, str_buffer, strlen(str_buffer));
     for (i = 0; i < 100; i++)
     {
-        if (nic_s->rx_rates[i] > 0)
-            line_h = ((nic_s->rx_rates[i]) / (nic_s->bigest_rate * 1.0)) * 50.0;
-        else
-            line_h = 0;
+        unsigned int line_h = 0;
+        if (nic_s->bigest_rate > 0)
+            line_h = nic_s->rx_rates[i] * 50 / nic_s->bigest_rate;
 
-        if (line_h > 0 && nic_s->tx_rates[i] < nic_s->rx_rates[i])
-            XDrawLine(win_prop->display, win_prop->window, win_prop->gc, 70 + (100 - i), 55, 70 + (100 - i), 5 + (50 - line_h));
+        if (nic_s->tx_rates[i] < nic_s->rx_rates[i])
+            XDrawLine(win_prop->display, win_prop->window, win_prop->gc, 170 - i, 55, 170 - i, 55 - line_h);
     }
 
     // yelow shape draws
     XSetForeground(win_prop->display, win_prop->gc, upload_download_color);
     for (i = 0; i < 100; i++)
     {
+        unsigned int line_h = 0;
+        if (nic_s->bigest_rate > 0)
+        {
+            if (nic_s->tx_rates[i] > nic_s->rx_rates[i])
+                line_h = nic_s->rx_rates[i] * 50 / nic_s->bigest_rate;
+            else
+                line_h = nic_s->tx_rates[i] * 50 / nic_s->bigest_rate;
+        }
 
-        if (nic_s->tx_rates[i] > nic_s->rx_rates[i])
-            line_h = (nic_s->rx_rates[i] / (nic_s->bigest_rate * 1.0)) * 50.0;
-        else
-            line_h = (nic_s->tx_rates[i] / (nic_s->bigest_rate * 1.0)) * 50.0;
-
-        if (line_h > 0)
-            XDrawLine(win_prop->display, win_prop->window, win_prop->gc, 70 + (100 - i), 55, 70 + (100 - i), 5 + (50 - line_h));
+        XDrawLine(win_prop->display, win_prop->window, win_prop->gc, 170 - i, 55, 170 - i, 55 - line_h);
     }
     XFlush(win_prop->display);
 }
@@ -174,7 +175,7 @@ void window_blocking_event_handler(struct window_display_struct *win_prop, struc
     {
         XNextEvent(win_prop->display, &ev);
 
-        if (ev.type == 4)
+        if (ev.type == ButtonPress)
         {
             if (ev.xbutton.button == Button1)
             {
@@ -215,14 +216,14 @@ void window_blocking_event_handler(struct window_display_struct *win_prop, struc
                 exit(0);
             }
         }
-        if (ev.type == 5)
+        if (ev.type == ButtonRelease)
         {
             if (ev.xbutton.button == 1)
             {
                 grabed = 0;
                 if (!moved)
                 {
-                    window_fadeout_fade_in_with_delay(win_prop, 5);
+                    window_fadeout_fadein_with_delay(win_prop, 5);
                 }
                 else
                 {
@@ -235,7 +236,7 @@ void window_blocking_event_handler(struct window_display_struct *win_prop, struc
                 }
             }
         }
-        if (ev.type == 6 && grabed == 1)
+        if (ev.type == MotionNotify && grabed == 1)
         {
             Window window_returned;
             int tmp_x, tmp_y, current_mouse_x, current_mouse_y;
