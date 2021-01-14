@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Terminal=false
+Exec=ashmon
+Icon=ashmon
+Name=ashmon
+Comment=Graphical Bandwidth Monitor
+Categories=System;Network;Utility;
+Keywords=Network;Bandwidth;Usage;Monitor;

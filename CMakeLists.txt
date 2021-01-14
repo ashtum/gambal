@@ -26,3 +26,12 @@ add_executable(ashmon src/ashmon.cpp)
 target_link_libraries(ashmon ${X11_LIBRARIES})
 
 install(TARGETS ashmon DESTINATION bin)
+
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/assets/ashmon.desktop
+        DESTINATION /usr/share/applications)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/assets/ashmon.desktop
+        DESTINATION /etc/xdg/autostart)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/assets/icons/ashmon.png
+        DESTINATION /usr/share/icons/hicolor/scalable/apps/)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/assets/icons/ashmon.svg
+        DESTINATION /usr/share/icons/hicolor/scalable/apps/)

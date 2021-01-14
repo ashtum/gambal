@@ -9,20 +9,14 @@
 ## Build
 
 ```shell
-sudo apt-get install libx11-dev
+sudo apt-get install build-essential cmake libx11-dev
 git clone https://github.com/ashtum/ashmon.git
 cd ashmon
 mkdir build
 cd build
 cmake ..
 sudo make install
-```
-
-If you want it start automatically at system boot time:
-
-```shell
-cd ashmon
-./autostart.sh
+sudo gtk-update-icon-cache /usr/share/icons/hicolor
 ```
 
 ## Gui operations
