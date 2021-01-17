@@ -1,6 +1,6 @@
 #include "config.hpp"
 #include "gui.hpp"
-#include "nic_mgr.hpp"
+#include "proc.hpp"
 
 #include <cstdio>
 #include <iostream>
@@ -20,8 +20,8 @@ int main()
     try
     {
         ashmon::config config{ init_config_path() };
-        ashmon::nic_mgr nic_mgr{ &config };
-        ashmon::gui gui{ &config, &nic_mgr };
+        ashmon::proc proc{ &config };
+        ashmon::gui gui{ &config, &proc };
         gui.run();
     }
     catch (const std::exception& ex)

@@ -2,7 +2,7 @@
 #pragma once
 
 #include "config.hpp"
-#include "nic_mgr.hpp"
+#include "proc.hpp"
 
 #include <cmath>
 #include <cstring>
@@ -25,6 +25,10 @@ class gui
     {
         int x{};
         int y{};
+        auto operator+(const coord& rhs) const
+        {
+            return coord{ x + rhs.x, y + rhs.y };
+        }
     };
     struct dimn
     {
@@ -42,18 +46,35 @@ class gui
         bool hovered{};
     };
     config* config_;
-    nic_mgr* nic_mgr_;
+    proc* proc_;
     Display* display_;
     Window window_;
     std::map<std::string, GC> gcs_;
     std::vector<button> buttons_;
     std::array<pollfd, 2> poll_fds_{};
     bool window_extended_{};
+    int window_w_{ 158 };
+    int window_h_{ 1 };
+    struct style
+    {
+        std::string name;
+        std::string font_name;
+        Font font{};
+        int lwidth{};
+        int char_w{};
+        int char_h{};
+        int bsize{};
+        int lgap{};
+        int bgap{};
+        int window_width{};
+    };
+    std::vector<style> styles_{ { "normal", "6x13", {}, 1, 6, 13, 17, 13, 4, 158 }, { "bold", "7x13B*", {}, 2, 7, 13, 19, 14, 5, 174 } };
+    decltype(styles_)::iterator style_{ styles_.begin() };
 
   public:
-    gui(config* config, nic_mgr* nic_mgr)
+    gui(config* config, proc* proc)
         : config_(config)
-        , nic_mgr_(nic_mgr)
+        , proc_(proc)
     {
         display_ = XOpenDisplay(nullptr);
 
@@ -73,8 +94,8 @@ class gui
             DefaultRootWindow(display_),
             0,
             0,
-            180,
-            90,
+            window_w_,
+            window_h_,
             0,
             vinfo.depth,
             InputOutput,
@@ -95,14 +116,23 @@ class gui
         const auto [window_x, window_y] = config_->window_xy();
         /* if window position is outside the screen (screen resolution have been changed) */
         if (window_x < 0 || window_x > display_w || window_y < 0 || window_y > display_h)
-            XMoveWindow(display_, window_, display_w - 180 - 50, display_h - 90 - 50);
+            XMoveWindow(display_, window_, display_w - 220, display_h - 120);
         else
             XMoveWindow(display_, window_, window_x, window_y);
 
         XMapWindow(display_, window_);
 
-        buttons_.push_back({ "prev_nic", coord{ 1, 90 }, dimn{ 17, 17 }, "<", [&] { nic_mgr_->select_prev_nic(); } });
-        buttons_.push_back({ "next_nic", coord{ 162, 90 }, dimn{ 17, 17 }, ">", [&] { nic_mgr_->select_next_nic(); } });
+        buttons_.push_back({ "prev_nic", {}, {}, "<", [&] { proc_->select_prev_nic(); } });
+        buttons_.push_back({ "next_nic", {}, {}, ">", [&] { proc_->select_next_nic(); } });
+        buttons_.push_back({ "prev_style", {}, {}, "<", [&] { select_prev_style(); } });
+        buttons_.push_back({ "next_style", {}, {}, ">", [&] { select_next_style(); } });
+
+        for (auto& style : styles_)
+            style.font = XLoadFont(display_, style.font_name.c_str());
+
+        style_ = std::find_if(styles_.begin(), styles_.end(), [&](const auto& style) { return style.name == config_->style_name(); });
+        if (style_ == styles_.end())
+            style_ = styles_.begin();
 
         update_gcs();
 
@@ -148,7 +178,7 @@ class gui
                     uint64_t res{};
                     if (read(poll_fds_.at(1).fd, &res, sizeof(res)) < 0)
                         throw std::runtime_error("read() failed: errno=" + std::string{ std::strerror(errno) });
-                    nic_mgr_->update();
+                    proc_->update();
                     send_expose_event = true;
                 }
             }
@@ -231,8 +261,7 @@ class gui
                         }
                         for (auto& btn : buttons_)
                         {
-                            if (e.x >= btn.coord.x && e.x < btn.coord.x + btn.dimn.w && e.y >= btn.coord.y &&
-                                e.y < btn.coord.y + btn.dimn.h)
+                            if (e.x >= btn.coord.x && e.x < btn.coord.x + btn.dimn.w && e.y >= btn.coord.y && e.y < btn.coord.y + btn.dimn.h)
                             {
                                 if (!btn.hovered)
                                 {
@@ -250,8 +279,8 @@ class gui
                     }
                     case EnterNotify:
                     {
-                        XResizeWindow(display_, window_, 180, 108);
                         window_extended_ = true;
+                        send_expose_event = true;
                         break;
                     }
                     case LeaveNotify:
@@ -259,13 +288,10 @@ class gui
                         for (auto& btn : buttons_)
                         {
                             if (btn.hovered)
-                            {
                                 btn.hovered = false;
-                                send_expose_event = true;
-                            }
                         }
-                        XResizeWindow(display_, window_, 180, 90);
                         window_extended_ = false;
+                        send_expose_event = true;
                         break;
                     }
                 }
@@ -278,6 +304,7 @@ class gui
         for (const auto& gc : gcs_)
             XFreeGC(display_, gc.second);
 
+        XDestroyWindow(display_, window_);
         XCloseDisplay(display_);
 
         for (const auto& poll_fd : poll_fds_)
@@ -287,32 +314,34 @@ class gui
   private:
     void fill_rectangle(const std::string& gc_name, coord coord, dimn dimn)
     {
-        XFillRectangle(display_, window_, gcs_.at(gc_name), coord.x, coord.y, dimn.w, dimn.h);
+        XFillRectangle(display_, window_, gcs_.at(gc_name), coord.x + 02, coord.y + 02, dimn.w, dimn.h);
     }
     void draw_rectangle(const std::string& gc_name, coord coord, dimn dimn)
     {
-        XDrawRectangle(display_, window_, gcs_.at(gc_name), coord.x, coord.y, dimn.w, dimn.h);
+        const auto lwidth = style_->lwidth;
+        XDrawRectangle(display_, window_, gcs_.at(gc_name), coord.x + 02 + lwidth / 2, coord.y + 02 + lwidth / 2, dimn.w - lwidth, dimn.h - lwidth);
     }
 
     void draw_string(const std::string& gc_name, coord coord, const std::string& str)
     {
-        XDrawString(display_, window_, gcs_.at(gc_name), coord.x, coord.y, str.data(), str.size());
+        XDrawString(display_, window_, gcs_.at(gc_name), coord.x + 02, coord.y + 02, str.data(), str.size());
     }
 
     void draw_string_center(const std::string& gc_name, coord coord, dimn dimn, std::string str)
     {
-        auto extra = static_cast<int>(str.size()) - dimn.w / 6;
+        auto extra = static_cast<int>(str.size()) - dimn.w / style_->char_w;
         if (extra > 0)
             str = str.substr(0, str.size() - extra - 2) + "..";
 
-        auto x = coord.x + 1 + (dimn.w / 2 - str.size() * 6 / 2);
-        auto y = coord.y + (dimn.h - 9) / 2 + 9;
-        XDrawString(display_, window_, gcs_.at(gc_name), x, y, str.data(), str.size());
+        auto x = coord.x + std::ceil(dimn.w / 2.0 - str.size() * style_->char_w / 2.0);
+        auto y = coord.y + std::ceil(dimn.h / 2.0 + style_->char_h / 3.0);
+        XDrawString(display_, window_, gcs_.at(gc_name), x + 02, y + 02, str.data(), str.size());
     }
 
     void draw_line(const std::string& gc_name, coord coord, dimn dimn)
     {
-        XDrawLine(display_, window_, gcs_.at(gc_name), coord.x, coord.y, coord.x + dimn.w, coord.y - dimn.h);
+        const auto lwidth = style_->lwidth;
+        XDrawLine(display_, window_, gcs_.at(gc_name), coord.x + 02, coord.y + 02 + lwidth / 2, coord.x + 02 + dimn.w, coord.y + 02 + lwidth / 2 - dimn.h);
     }
 
     void update_gcs()
@@ -323,10 +352,11 @@ class gui
             uint8_t r, g, b;
         };
 
-        std::array<gc_spec, 8> gc_specs{ { { "rx", 0x22, 0x8B, 0x22 },
+        std::array<gc_spec, 9> gc_specs{ { { "rx", 0x22, 0x8B, 0x22 },
                                            { "tx", 0xDC, 0x14, 0x3C },
                                            { "rxtx", 0xFF, 0xA5, 0x00 },
                                            { "prime", 0x1A, 0x90, 0xFF },
+                                           { "purple", 0xBF, 0x90, 0xFF },
                                            { "light", 0xBA, 0xDD, 0xFF },
                                            { "button", 0xF0, 0xF6, 0xFF },
                                            { "button_hover", 0xDA, 0xEC, 0xFF },
@@ -335,85 +365,195 @@ class gui
         for (const auto& gc_spec : gc_specs)
         {
             if (gcs_.find(gc_spec.name) == gcs_.end())
-            {
                 gcs_.emplace(gc_spec.name, XCreateGC(display_, window_, 0, nullptr));
-                XSetLineAttributes(display_, gcs_.at(gc_spec.name), 1, LineSolid, CapNotLast, JoinMiter);
-                const auto font = XLoadFont(display_, "6x13");
-                XSetFont(display_, gcs_.at(gc_spec.name), font);
-            }
 
+            XSetLineAttributes(display_, gcs_.at(gc_spec.name), style_->lwidth, LineSolid, CapNotLast, JoinMiter);
+            XSetFont(display_, gcs_.at(gc_spec.name), style_->font);
             uint8_t alpha = config_->opacity() / 100.0 * 0xFF;
-            uint32_t rgba = alpha << 24 | (gc_spec.r * alpha) / 255 << 16 | (gc_spec.g * alpha) / 255 << 8 | (gc_spec.b * alpha) / 255;
+            uint32_t rgba = alpha << 24 | (gc_spec.r * alpha) / 0xFF << 16 | (gc_spec.g * alpha) / 0xFF << 8 | (gc_spec.b * alpha) / 0xFF;
             XSetForeground(display_, gcs_.at(gc_spec.name), rgba);
         }
     }
 
-    void expose()
+    void select_prev_style()
     {
-        const auto& nic = nic_mgr_->selected_nic();
-        const auto max_rate = nic.max_rate();
+        if (styles_.begin() == style_)
+            return;
+        style_ = std::prev(style_);
+        update_gcs();
+        config_->style_name(style_->name);
+    }
 
-        fill_rectangle("background", coord{ 0, 0 }, dimn{ 180, 123 });
-        draw_rectangle("light", coord{ 0, 0 }, dimn{ 179, 122 });
-        draw_line("light", coord{ 5, 55 }, dimn{ 170, 0 });
-        draw_line("light", coord{ 1, 89 }, dimn{ 178, 0 });
+    void select_next_style()
+    {
+        if (styles_.end() == std::next(style_))
+            return;
+        style_ = std::next(style_);
+        update_gcs();
+        config_->style_name(style_->name);
+    }
 
-        if (window_extended_)
-        {
-            draw_line("light", coord{ 1, 107 }, dimn{ 178, 0 });
-            draw_line("light", coord{ 92, 125 }, dimn{ 0, 17 });
+    auto draw_net(int top)
+    {
+        const auto org_top = top;
+        const auto margin = style_->bgap + style_->lwidth;
+        const auto& nic = proc_->selected_nic();
+        const auto w_slots = window_w_ - 10 * style_->char_w - 10;
+        const auto max_rate = nic.max_rate(w_slots / style_->lwidth);
 
-            for (auto& btn : buttons_)
-            {
-                if (btn.name == "prev_nic")
-                    btn.disabled = !nic_mgr_->is_prev_nic_available();
+        top += style_->lgap + style_->lwidth;
+        draw_string("prime", coord{ margin, top }, humanize_size(max_rate) + "/s");
+        top += style_->lgap + 1;
+        draw_string("rx", coord{ margin, top }, humanize_size(nic.latest_rate().rx) + "/s");
+        top += style_->lgap + 1;
+        draw_string("tx", coord{ margin, top }, humanize_size(nic.latest_rate().tx) + "/s");
+        top += style_->bgap;
+        draw_line("light", coord{ margin, top }, dimn{ window_w_ - 2 * margin, 0 });
 
-                if (btn.name == "next_nic")
-                    btn.disabled = !nic_mgr_->is_next_nic_available();
-
-                std::string background_gc{ "button" };
-                if (btn.hovered && !btn.disabled)
-                    background_gc = "button_hover";
-                fill_rectangle(background_gc, btn.coord, btn.dimn);
-
-                std::string text_gc{ "prime" };
-                if (btn.disabled)
-                    text_gc = "light";
-                draw_string_center(text_gc, btn.coord, btn.dimn, btn.text);
-            }
-            draw_string_center("prime", coord{ 18, 90 }, dimn{ 144, 17 }, nic_mgr_->selected_nic_name());
-        }
-
-        for (auto i = 1; i <= 3; i++)
-            draw_string("prime", coord{ 5, i * 17 - 2 }, humanize_size(max_rate / i) + "/s");
-
-        auto i = 0;
-        for (const auto& rate : nic.rates())
+        auto rate_it = nic.rates().rbegin();
+        const auto h_slots = top - org_top - margin;
+        for (auto i = 1; i < w_slots; i += style_->lwidth, rate_it++)
         {
             if (max_rate == 0)
                 break;
 
             const auto draw_candle = [&](auto gc_name, auto rate) {
-                draw_line(gc_name, coord{ 75 + i, 55 }, dimn{ 0, static_cast<int>(rate * 50 / max_rate) });
+                const auto candle = static_cast<int>(rate * h_slots / max_rate);
+                draw_line(gc_name, coord{ window_w_ - margin - i, top - style_->lwidth / 2 }, dimn{ 0, candle });
             };
 
-            if (rate.rx >= rate.tx)
-                draw_candle("rx", rate.rx);
+            if (rate_it->rx >= rate_it->tx)
+                draw_candle("rx", rate_it->rx);
             else
-                draw_candle("tx", rate.tx);
+                draw_candle("tx", rate_it->tx);
 
-            draw_candle("rxtx", std::min(rate.rx, rate.tx));
-            i++;
+            draw_candle("rxtx", std::min(rate_it->rx, rate_it->tx));
         }
 
-        draw_string("rx", coord{ 5, 70 }, "D  " + humanize_size(nic.latest_rate().rx) + "/s");
-        draw_string("tx", coord{ 92, 70 }, "U  " + humanize_size(nic.latest_rate().tx) + "/s");
-
-        draw_string("prime", coord{ 5, 85 }, "TD " + humanize_size(nic.total_bytes().rx, 3));
-        draw_string("prime", coord{ 92, 85 }, "TU " + humanize_size(nic.total_bytes().tx, 3));
+        top += style_->lgap + style_->lwidth;
+        draw_string("prime", coord{ margin, top }, "D " + humanize_size(nic.total_bytes().rx, 6));
+        draw_string("prime", coord{ window_w_ / 2, top }, "U " + humanize_size(nic.total_bytes().tx, 6));
+        top += margin;
+        draw_rectangle("light", coord{ 0, org_top }, { window_w_, top - org_top });
+        return top + 2;
     }
 
-    static std::string humanize_size(uint64_t size, size_t max_precision = 2)
+    auto draw_cpu(int top)
+    {
+        const auto& cpus = proc_->cpus();
+        const auto cpu_count = 8;
+        const auto thickness = style_->lwidth * 2;
+        const auto gap = 2;
+
+        const auto rows = std::ceil(cpu_count / 8.0);
+        const auto cols = std::ceil(cpu_count / rows);
+        const auto f_width = (window_w_ - (cols - 1) * gap) / cols;
+
+        auto cpu_it = cpus.begin();
+        for (auto r = 0; r < rows; r++)
+        {
+            for (auto c = 0; c < cols && cpu_it != cpus.end(); c++, cpu_it++)
+            {
+                const auto x1 = static_cast<int>(std::floor(f_width * c + c * gap));
+                const auto x2 = static_cast<int>(std::floor(f_width * c + c * gap + f_width));
+                const auto width = x2 - x1;
+                const auto frame_c = coord{ x1, top + r * (gap + thickness) };
+                const auto candle = static_cast<int>(cpu_it->usage() * width);
+                fill_rectangle("light", frame_c, dimn{ width, thickness });
+                fill_rectangle("prime", frame_c, dimn{ candle, thickness });
+            }
+        }
+        return top + 2 + static_cast<int>(rows) * (thickness + gap) - gap;
+    }
+
+    auto draw_ram(int top)
+    {
+        const auto thickness = style_->lwidth * 2;
+
+        const auto& mem = proc_->get_mem();
+        const auto used = static_cast<int>(1.0 * mem.used / mem.total * window_w_);
+        const auto buffcache = static_cast<int>(1.0 * mem.buffcache / mem.total * window_w_);
+
+        fill_rectangle("light", coord{ 0, top }, dimn{ window_w_, thickness });
+        fill_rectangle("prime", coord{ 0, top }, dimn{ used, thickness });
+        fill_rectangle("purple", coord{ 0, top } + coord{ used, 0 }, dimn{ buffcache, thickness });
+        return top + 2 + thickness;
+    }
+
+    auto draw_opt(int top)
+    {
+        if (!window_extended_)
+            return top;
+        const auto org_top = top;
+        const auto lwidth = style_->lwidth;
+        const auto bsize = style_->bsize;
+        top += lwidth;
+        for (auto& btn : buttons_)
+        {
+            btn.dimn = { bsize, bsize };
+            if (btn.name == "prev_nic")
+            {
+                btn.disabled = !proc_->is_prev_nic_available();
+                btn.coord = coord{ lwidth, top };
+            }
+
+            if (btn.name == "next_nic")
+            {
+                btn.disabled = !proc_->is_next_nic_available();
+                btn.coord = coord{ window_w_ - btn.dimn.w - lwidth, top };
+            }
+
+            if (btn.name == "prev_style")
+            {
+                btn.disabled = style_ == styles_.begin();
+                btn.coord = coord{ lwidth, top + btn.dimn.h + lwidth };
+            }
+
+            if (btn.name == "next_style")
+            {
+                btn.disabled = style_ == std::prev(styles_.end());
+                btn.coord = coord{ window_w_ - btn.dimn.w - lwidth, top + btn.dimn.h + lwidth };
+            }
+
+            if (btn.hovered && !btn.disabled)
+                fill_rectangle("button_hover", btn.coord, btn.dimn);
+            else
+                fill_rectangle("button", btn.coord, btn.dimn);
+
+            if (!btn.disabled)
+                draw_string_center("prime", btn.coord, btn.dimn, btn.text);
+        }
+
+        draw_string_center("prime", coord{ bsize + lwidth, top }, dimn{ window_w_ - 2 * (bsize + lwidth), bsize }, proc_->selected_nic_name());
+        top += bsize;
+        draw_line("light", coord{ 0, top }, { window_w_, 0 });
+        top += lwidth;
+        draw_string_center("prime", coord{ bsize + lwidth, top }, dimn{ window_w_ - 2 * (bsize + lwidth), bsize }, style_->name);
+        top += bsize + lwidth;
+        draw_rectangle("light", coord{ 0, org_top }, dimn{ window_w_, top - org_top });
+
+        return top + 2;
+    }
+
+    void expose()
+    {
+        fill_rectangle("background", coord{ -2, -2 }, dimn{ window_w_ + 4, window_h_ + 2 });
+
+        auto top = 0;
+        top = draw_net(top);
+        top = draw_cpu(top);
+        top = draw_ram(top);
+        top = draw_opt(top);
+
+        if (top != window_h_ || window_w_ != style_->window_width)
+        {
+            window_w_ = style_->window_width;
+            window_h_ = top;
+            XResizeWindow(display_, window_, window_w_ + 4, window_h_ + 2);
+        }
+    }
+
+    static std::string humanize_size(uint64_t size, size_t max_width = 4)
     {
         std::array<const char*, 7> units = { "B", "KB", "MB", "GB", "TB", "PB", "EB" };
 
@@ -428,7 +568,11 @@ class gui
         if (int_digits == 0)
             int_digits = 3;
 
-        return { str.substr(0, int_digits) + "." + str.substr(int_digits, std::min(order, max_precision)) + " " + units[order] };
+        const auto fraction_digits = max_width - int_digits - 1;
+        if (!fraction_digits)
+            return str.substr(0, 3) + " " + units[order];
+
+        return { str.substr(0, int_digits) + "." + str.substr(int_digits, std::min(fraction_digits, order)) + " " + units[order] };
     }
 };
 } // namespace ashmon

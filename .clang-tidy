@@ -1,6 +1,7 @@
 FormatStyle:        'file'
 Checks:             '*,
                     -performance-inefficient-string-concatenation,
+                    -readability-isolate-declaration,
                     -hicpp-special-member-functions,
                     -cppcoreguidelines-special-member-functions,
                     -bugprone-narrowing-conversions,

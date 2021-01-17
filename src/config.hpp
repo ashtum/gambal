@@ -8,7 +8,8 @@ namespace ashmon
 class config
 {
     std::string path_;
-    std::string nic_name_;
+    std::string style_name_{ "-" };
+    std::string nic_name_{ "-" };
     unsigned int opacity_{ 90 };
     int window_x_{ -1 };
     int window_y_{ -1 };
@@ -19,7 +20,18 @@ class config
     {
         std::ifstream ifs{ path_ };
         if (ifs.is_open())
-            ifs >> nic_name_ >> opacity_ >> window_x_ >> window_y_;
+            ifs >> style_name_ >> nic_name_ >> opacity_ >> window_x_ >> window_y_;
+    }
+
+    const auto& style_name() const
+    {
+        return style_name_;
+    }
+
+    auto style_name(const std::string& style_name)
+    {
+        style_name_ = style_name;
+        update_settings_file();
     }
 
     const auto& nic_name() const
@@ -61,7 +73,7 @@ class config
     {
         std::ofstream ofs{ path_ };
         if (ofs.is_open())
-            ofs << nic_name_ << '\n' << opacity_ << '\n' << window_x_ << '\n' << window_y_ << '\n';
+            ofs << style_name_ << '\n' << nic_name_ << '\n' << opacity_ << '\n' << window_x_ << '\n' << window_y_ << '\n';
     }
 };
 } // namespace ashmon
