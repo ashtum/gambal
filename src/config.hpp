@@ -3,7 +3,7 @@
 #include <fstream>
 #include <string>
 
-namespace ashmon
+namespace gambal
 {
 class config
 {
@@ -76,4 +76,4 @@ class config
             ofs << style_name_ << '\n' << nic_name_ << '\n' << opacity_ << '\n' << window_x_ << '\n' << window_y_ << '\n';
     }
 };
-} // namespace ashmon
+} // namespace gambal

@@ -17,7 +17,7 @@
 #include <sys/timerfd.h>
 #include <unistd.h>
 
-namespace ashmon
+namespace gambal
 {
 class gui
 {
@@ -103,7 +103,7 @@ class gui
             CWColormap | CWBorderPixel | CWBackPixel,
             &attr);
 
-        XStoreName(display_, window_, "ashmon");
+        XStoreName(display_, window_, "gambal");
         auto event_mask = ExposureMask | PointerMotionMask | LeaveWindowMask | EnterWindowMask | ButtonPressMask | ButtonReleaseMask;
         XSelectInput(display_, window_, event_mask);
 
@@ -575,4 +575,4 @@ class gui
         return { str.substr(0, int_digits) + "." + str.substr(int_digits, std::min(fraction_digits, order)) + " " + units[order] };
     }
 };
-} // namespace ashmon
+} // namespace gambal

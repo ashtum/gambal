@@ -1,8 +1,8 @@
-# ashmon
+# gambal
 
-[![Build Status](https://travis-ci.org/ashtum/ashmon.svg?branch=master)](https://travis-ci.org/ashtum/ashmon)
+[![Build Status](https://travis-ci.com/ashtum/gambal.svg?branch=master)](https://travis-ci.com/ashtum/gambal)
 
-**ashmon** is a tiny transparent graphical monitor for linux, it shows Network, CPU and memory usages.  
+**gambal** is a tiny transparent graphical monitor for linux, it shows Network, CPU and Memory usages.  
 It's light-weight and uses libX11 for GUI and doesn't depend on any extra library.
 
 ![screenshot](https://user-images.githubusercontent.com/11743154/105398916-28f4fc00-5c38-11eb-9ea9-14e3b5402b01.png)
@@ -11,8 +11,8 @@ It's light-weight and uses libX11 for GUI and doesn't depend on any extra librar
 
 ```shell
 sudo apt-get install build-essential cmake libx11-dev
-git clone https://github.com/ashtum/ashmon.git
-cd ashmon
+git clone https://github.com/ashtum/gambal.git
+cd gambal
 mkdir build
 cd build
 cmake ..

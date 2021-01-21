@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.2)
 
 project(
-  ashmon
+  gambal
   VERSION 2.0.0
   LANGUAGES CXX)
 
@@ -22,16 +22,16 @@ find_package(X11 REQUIRED)
 include_directories(${X11_INCLUDE_DIR})
 link_directories(${X11_LIBRARIES})
 
-add_executable(ashmon src/ashmon.cpp)
-target_link_libraries(ashmon ${X11_LIBRARIES})
+add_executable(gambal src/gambal.cpp)
+target_link_libraries(gambal ${X11_LIBRARIES})
 
-install(TARGETS ashmon DESTINATION bin)
+install(TARGETS gambal DESTINATION bin)
 
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/assets/ashmon.desktop
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/assets/gambal.desktop
         DESTINATION /usr/share/applications)
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/assets/ashmon.desktop
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/assets/gambal.desktop
         DESTINATION /etc/xdg/autostart)
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/assets/icons/ashmon.png
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/assets/icons/gambal.png
         DESTINATION /usr/share/icons/hicolor/scalable/apps/)
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/assets/icons/ashmon.svg
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/assets/icons/gambal.svg
         DESTINATION /usr/share/icons/hicolor/scalable/apps/)

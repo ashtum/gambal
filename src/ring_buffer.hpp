@@ -3,7 +3,7 @@
 #include <array>
 #include <iterator>
 
-namespace ashmon
+namespace gambal
 {
 template<typename T, size_t N>
 class ring_buffer
@@ -115,4 +115,4 @@ class ring_buffer
         return reverse_iterator(begin());
     }
 };
-} // namespace ashmon
+} // namespace gambal

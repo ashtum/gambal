@@ -9,8 +9,9 @@
 #include <limits>
 #include <map>
 #include <sstream>
+#include <vector>
 
-namespace ashmon
+namespace gambal
 {
 inline auto wrap_subtract(uint64_t lhs, uint64_t rhs)
 {
@@ -271,4 +272,4 @@ class proc
         config_->nic_name(selected_nic_name());
     }
 };
-} // namespace ashmon
+} // namespace gambal
