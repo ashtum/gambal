@@ -2,10 +2,10 @@
 
 [![Build Status](https://travis-ci.com/ashtum/gambal.svg?branch=master)](https://travis-ci.com/ashtum/gambal)
 
-**gambal** is a tiny transparent graphical monitor for linux, it shows Network, CPU and Memory usages.  
-It's light-weight and uses libX11 for GUI and doesn't depend on any extra library.
+**gambal** is a tiny transparent graphical monitor, it provides an overview of network, CPU and memory usages.
+It's light-weight and uses libX11 for GUI and should work on (almost) all distros.
 
-![screenshot](https://user-images.githubusercontent.com/11743154/105398916-28f4fc00-5c38-11eb-9ea9-14e3b5402b01.png)
+![screenshot](https://user-images.githubusercontent.com/11743154/105464742-42815c80-5ca7-11eb-881e-067637981c79.png)
 
 ## Build
 

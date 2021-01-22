@@ -38,10 +38,10 @@ class gui
     struct button
     {
         std::string name;
-        gui::coord coord{};
-        gui::dimn dimn{};
         std::string text{};
         std::function<void()> on_click;
+        gui::coord coord{};
+        gui::dimn dimn{};
         bool disabled{};
         bool hovered{};
     };
@@ -53,23 +53,20 @@ class gui
     std::vector<button> buttons_;
     std::array<pollfd, 2> poll_fds_{};
     bool window_extended_{};
-    int window_w_{ 158 };
-    int window_h_{ 1 };
     struct style
     {
         std::string name;
         std::string font_name;
         Font font{};
-        int lwidth{};
+        int thickness{};
         int char_w{};
         int char_h{};
-        int bsize{};
-        int lgap{};
-        int bgap{};
         int window_width{};
     };
-    std::vector<style> styles_{ { "normal", "6x13", {}, 1, 6, 13, 17, 13, 4, 158 }, { "bold", "7x13B*", {}, 2, 7, 13, 19, 14, 5, 174 } };
+    std::vector<style> styles_{ { "normal", "6x13", {}, 2, 6, 13, 158 }, { "bold", "7x13B*", {}, 3, 7, 13, 174 } };
     decltype(styles_)::iterator style_{ styles_.begin() };
+    int window_w_{ style_->window_width };
+    int window_h_{ 1 };
 
   public:
     gui(config* config, proc* proc)
@@ -122,10 +119,10 @@ class gui
 
         XMapWindow(display_, window_);
 
-        buttons_.push_back({ "prev_nic", {}, {}, "<", [&] { proc_->select_prev_nic(); } });
-        buttons_.push_back({ "next_nic", {}, {}, ">", [&] { proc_->select_next_nic(); } });
-        buttons_.push_back({ "prev_style", {}, {}, "<", [&] { select_prev_style(); } });
-        buttons_.push_back({ "next_style", {}, {}, ">", [&] { select_next_style(); } });
+        buttons_.push_back({ "prev_nic", "<", [&] { proc_->select_prev_nic(); } });
+        buttons_.push_back({ "next_nic", ">", [&] { proc_->select_next_nic(); } });
+        buttons_.push_back({ "prev_style", "<", [&] { select_prev_style(); } });
+        buttons_.push_back({ "next_style", ">", [&] { select_next_style(); } });
 
         for (auto& style : styles_)
             style.font = XLoadFont(display_, style.font_name.c_str());
@@ -314,17 +311,16 @@ class gui
   private:
     void fill_rectangle(const std::string& gc_name, coord coord, dimn dimn)
     {
-        XFillRectangle(display_, window_, gcs_.at(gc_name), coord.x + 02, coord.y + 02, dimn.w, dimn.h);
+        XFillRectangle(display_, window_, gcs_.at(gc_name), coord.x + 01, coord.y + 01, dimn.w, dimn.h);
     }
     void draw_rectangle(const std::string& gc_name, coord coord, dimn dimn)
     {
-        const auto lwidth = style_->lwidth;
-        XDrawRectangle(display_, window_, gcs_.at(gc_name), coord.x + 02 + lwidth / 2, coord.y + 02 + lwidth / 2, dimn.w - lwidth, dimn.h - lwidth);
+        XDrawRectangle(display_, window_, gcs_.at(gc_name), coord.x + 01, coord.y + 01, dimn.w - 1, dimn.h - 1);
     }
 
     void draw_string(const std::string& gc_name, coord coord, const std::string& str)
     {
-        XDrawString(display_, window_, gcs_.at(gc_name), coord.x + 02, coord.y + 02, str.data(), str.size());
+        XDrawString(display_, window_, gcs_.at(gc_name), coord.x + 01, coord.y + 01, str.data(), str.size());
     }
 
     void draw_string_center(const std::string& gc_name, coord coord, dimn dimn, std::string str)
@@ -335,13 +331,12 @@ class gui
 
         auto x = coord.x + std::ceil(dimn.w / 2.0 - str.size() * style_->char_w / 2.0);
         auto y = coord.y + std::ceil(dimn.h / 2.0 + style_->char_h / 3.0);
-        XDrawString(display_, window_, gcs_.at(gc_name), x + 02, y + 02, str.data(), str.size());
+        XDrawString(display_, window_, gcs_.at(gc_name), x + 01, y + 01, str.data(), str.size());
     }
 
     void draw_line(const std::string& gc_name, coord coord, dimn dimn)
     {
-        const auto lwidth = style_->lwidth;
-        XDrawLine(display_, window_, gcs_.at(gc_name), coord.x + 02, coord.y + 02 + lwidth / 2, coord.x + 02 + dimn.w, coord.y + 02 + lwidth / 2 - dimn.h);
+        XDrawLine(display_, window_, gcs_.at(gc_name), coord.x + 01, coord.y + 01, coord.x + 01 + dimn.w, coord.y + 01 - dimn.h);
     }
 
     void update_gcs()
@@ -367,7 +362,7 @@ class gui
             if (gcs_.find(gc_spec.name) == gcs_.end())
                 gcs_.emplace(gc_spec.name, XCreateGC(display_, window_, 0, nullptr));
 
-            XSetLineAttributes(display_, gcs_.at(gc_spec.name), style_->lwidth, LineSolid, CapNotLast, JoinMiter);
+            XSetLineAttributes(display_, gcs_.at(gc_spec.name), 1, LineSolid, CapNotLast, JoinMiter);
             XSetFont(display_, gcs_.at(gc_spec.name), style_->font);
             uint8_t alpha = config_->opacity() / 100.0 * 0xFF;
             uint32_t rgba = alpha << 24 | (gc_spec.r * alpha) / 0xFF << 16 | (gc_spec.g * alpha) / 0xFF << 8 | (gc_spec.b * alpha) / 0xFF;
@@ -396,30 +391,30 @@ class gui
     auto draw_net(int top)
     {
         const auto org_top = top;
-        const auto margin = style_->bgap + style_->lwidth;
+        const auto margin = 5;
         const auto& nic = proc_->selected_nic();
         const auto w_slots = window_w_ - 10 * style_->char_w - 10;
-        const auto max_rate = nic.max_rate(w_slots / style_->lwidth);
+        const auto max_rate = nic.max_rate(w_slots);
 
-        top += style_->lgap + style_->lwidth;
+        top += style_->char_h + 1;
         draw_string("prime", coord{ margin, top }, humanize_size(max_rate) + "/s");
-        top += style_->lgap + 1;
+        top += style_->char_h + 1;
         draw_string("rx", coord{ margin, top }, humanize_size(nic.latest_rate().rx) + "/s");
-        top += style_->lgap + 1;
+        top += style_->char_h + 1;
         draw_string("tx", coord{ margin, top }, humanize_size(nic.latest_rate().tx) + "/s");
-        top += style_->bgap;
+        top += 4;
         draw_line("light", coord{ margin, top }, dimn{ window_w_ - 2 * margin, 0 });
 
         auto rate_it = nic.rates().rbegin();
         const auto h_slots = top - org_top - margin;
-        for (auto i = 1; i < w_slots; i += style_->lwidth, rate_it++)
+        for (auto i = 1; i < w_slots; i++, rate_it++)
         {
             if (max_rate == 0)
                 break;
 
             const auto draw_candle = [&](auto gc_name, auto rate) {
                 const auto candle = static_cast<int>(rate * h_slots / max_rate);
-                draw_line(gc_name, coord{ window_w_ - margin - i, top - style_->lwidth / 2 }, dimn{ 0, candle });
+                draw_line(gc_name, coord{ window_w_ - margin - i, top }, dimn{ 0, candle });
             };
 
             if (rate_it->rx >= rate_it->tx)
@@ -430,19 +425,19 @@ class gui
             draw_candle("rxtx", std::min(rate_it->rx, rate_it->tx));
         }
 
-        top += style_->lgap + style_->lwidth;
+        top += style_->char_h + 1;
         draw_string("prime", coord{ margin, top }, "D " + humanize_size(nic.total_bytes().rx, 6));
         draw_string("prime", coord{ window_w_ / 2, top }, "U " + humanize_size(nic.total_bytes().tx, 6));
         top += margin;
-        draw_rectangle("light", coord{ 0, org_top }, { window_w_, top - org_top });
-        return top + 2;
+        draw_rectangle("light", coord{ 0, org_top }, dimn{ window_w_, top - org_top });
+        return top;
     }
 
     auto draw_cpu(int top)
     {
         const auto& cpus = proc_->cpus();
-        const auto cpu_count = 8;
-        const auto thickness = style_->lwidth * 2;
+        const auto cpu_count = cpus.size();
+        const auto thickness = style_->thickness;
         const auto gap = 2;
 
         const auto rows = std::ceil(cpu_count / 8.0);
@@ -457,18 +452,18 @@ class gui
                 const auto x1 = static_cast<int>(std::floor(f_width * c + c * gap));
                 const auto x2 = static_cast<int>(std::floor(f_width * c + c * gap + f_width));
                 const auto width = x2 - x1;
-                const auto frame_c = coord{ x1, top + r * (gap + thickness) };
                 const auto candle = static_cast<int>(cpu_it->usage() * width);
-                fill_rectangle("light", frame_c, dimn{ width, thickness });
-                fill_rectangle("prime", frame_c, dimn{ candle, thickness });
+                fill_rectangle("light", coord{ x1, top }, dimn{ width, thickness });
+                fill_rectangle("prime", coord{ x1, top }, dimn{ candle, thickness });
             }
+            top += gap + thickness;
         }
-        return top + 2 + static_cast<int>(rows) * (thickness + gap) - gap;
+        return top;
     }
 
     auto draw_ram(int top)
     {
-        const auto thickness = style_->lwidth * 2;
+        const auto thickness = style_->thickness;
 
         const auto& mem = proc_->get_mem();
         const auto used = static_cast<int>(1.0 * mem.used / mem.total * window_w_);
@@ -477,42 +472,42 @@ class gui
         fill_rectangle("light", coord{ 0, top }, dimn{ window_w_, thickness });
         fill_rectangle("prime", coord{ 0, top }, dimn{ used, thickness });
         fill_rectangle("purple", coord{ 0, top } + coord{ used, 0 }, dimn{ buffcache, thickness });
-        return top + 2 + thickness;
+        return top + thickness;
     }
 
     auto draw_opt(int top)
     {
         if (!window_extended_)
             return top;
+        top += 2;
         const auto org_top = top;
-        const auto lwidth = style_->lwidth;
-        const auto bsize = style_->bsize;
-        top += lwidth;
+        const auto bsize = 17;
+        top += 1;
         for (auto& btn : buttons_)
         {
             btn.dimn = { bsize, bsize };
             if (btn.name == "prev_nic")
             {
                 btn.disabled = !proc_->is_prev_nic_available();
-                btn.coord = coord{ lwidth, top };
+                btn.coord = coord{ 1, top };
             }
 
             if (btn.name == "next_nic")
             {
                 btn.disabled = !proc_->is_next_nic_available();
-                btn.coord = coord{ window_w_ - btn.dimn.w - lwidth, top };
+                btn.coord = coord{ window_w_ - bsize - 1, top };
             }
 
             if (btn.name == "prev_style")
             {
                 btn.disabled = style_ == styles_.begin();
-                btn.coord = coord{ lwidth, top + btn.dimn.h + lwidth };
+                btn.coord = coord{ 1, top + bsize + 1 };
             }
 
             if (btn.name == "next_style")
             {
                 btn.disabled = style_ == std::prev(styles_.end());
-                btn.coord = coord{ window_w_ - btn.dimn.w - lwidth, top + btn.dimn.h + lwidth };
+                btn.coord = coord{ window_w_ - bsize - 1, top + bsize + 1 };
             }
 
             if (btn.hovered && !btn.disabled)
@@ -524,32 +519,32 @@ class gui
                 draw_string_center("prime", btn.coord, btn.dimn, btn.text);
         }
 
-        draw_string_center("prime", coord{ bsize + lwidth, top }, dimn{ window_w_ - 2 * (bsize + lwidth), bsize }, proc_->selected_nic_name());
+        draw_string_center("prime", coord{ bsize + 1, top }, dimn{ window_w_ - 2 * (bsize + 1), bsize }, proc_->selected_nic_name());
         top += bsize;
-        draw_line("light", coord{ 0, top }, { window_w_, 0 });
-        top += lwidth;
-        draw_string_center("prime", coord{ bsize + lwidth, top }, dimn{ window_w_ - 2 * (bsize + lwidth), bsize }, style_->name);
-        top += bsize + lwidth;
+        draw_line("light", coord{ 0, top }, dimn{ window_w_, 0 });
+        top += 1;
+        draw_string_center("prime", coord{ bsize + 1, top }, dimn{ window_w_ - 2 * (bsize + 1), bsize }, style_->name);
+        top += bsize + 1;
         draw_rectangle("light", coord{ 0, org_top }, dimn{ window_w_, top - org_top });
 
-        return top + 2;
+        return top;
     }
 
     void expose()
     {
-        fill_rectangle("background", coord{ -2, -2 }, dimn{ window_w_ + 4, window_h_ + 2 });
+        fill_rectangle("background", coord{ -01, -01 }, dimn{ window_w_ + 02, window_h_ + 01 });
 
         auto top = 0;
-        top = draw_net(top);
+        top = draw_net(top) + 2;
         top = draw_cpu(top);
         top = draw_ram(top);
-        top = draw_opt(top);
+        top = draw_opt(top) + 1;
 
         if (top != window_h_ || window_w_ != style_->window_width)
         {
             window_w_ = style_->window_width;
             window_h_ = top;
-            XResizeWindow(display_, window_, window_w_ + 4, window_h_ + 2);
+            XResizeWindow(display_, window_, window_w_ + 02, window_h_ + 01);
         }
     }
 
