@@ -6,7 +6,7 @@ project(
   LANGUAGES CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_compile_options(-Wall -Wfatal-errors -Wextra -Wnon-virtual-dtor -pedantic)
 
@@ -32,6 +32,6 @@ install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/assets/gambal.desktop
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/assets/gambal.desktop
         DESTINATION /etc/xdg/autostart)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/assets/icons/gambal.png
-        DESTINATION /usr/share/icons/hicolor/scalable/apps/)
+        DESTINATION /usr/share/icons/hicolor/512x512/apps/)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/assets/icons/gambal.svg
         DESTINATION /usr/share/icons/hicolor/scalable/apps/)

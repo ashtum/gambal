@@ -56,9 +56,14 @@ class config
         update_settings_file();
     }
 
-    auto window_xy() const
+    auto window_x() const
     {
-        return std::pair{ window_x_, window_y_ };
+        return window_x_;
+    }
+
+    auto window_y() const
+    {
+        return window_y_;
     }
 
     auto window_xy(int x, int y)

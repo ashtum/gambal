@@ -112,7 +112,8 @@ class gui
 
         const auto display_w = DisplayWidth(display_, DefaultScreen(display_));
         const auto display_h = DisplayHeight(display_, DefaultScreen(display_));
-        const auto [window_x, window_y] = config_->window_xy();
+        const auto window_x = config_->window_x();
+        const auto window_y = config_->window_y();
         /* if window position is outside the screen (screen resolution have been changed) */
         if (window_x < 0 || window_x > display_w || window_y < 0 || window_y > display_h)
             XMoveWindow(display_, window_, display_w - 220, display_h - 120);
@@ -416,7 +417,7 @@ class gui
             if (max_rate == 0)
                 break;
 
-            const auto draw_candle = [&](auto gc_name, auto rate) {
+            const auto draw_candle = [&](const std::string& gc_name, uint64_t rate) {
                 const auto candle = static_cast<int>(rate * h_slots / max_rate);
                 draw_line(gc_name, coord{ window_w_ - margin - i, top }, dimn{ 0, candle });
             };
