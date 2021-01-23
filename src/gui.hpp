@@ -108,6 +108,8 @@ class gui
         auto prop_data = XInternAtom(display_, "_NET_WM_WINDOW_TYPE_DOCK", False);
         XChangeProperty(display_, window_, prop_type, XA_ATOM, 32, PropModeReplace, reinterpret_cast<unsigned char*>(&prop_data), 1);
 
+        XMapWindow(display_, window_);
+
         const auto display_w = DisplayWidth(display_, DefaultScreen(display_));
         const auto display_h = DisplayHeight(display_, DefaultScreen(display_));
         const auto [window_x, window_y] = config_->window_xy();
@@ -116,8 +118,6 @@ class gui
             XMoveWindow(display_, window_, display_w - 220, display_h - 120);
         else
             XMoveWindow(display_, window_, window_x, window_y);
-
-        XMapWindow(display_, window_);
 
         buttons_.push_back({ "prev_nic", "<", [&] { proc_->select_prev_nic(); } });
         buttons_.push_back({ "next_nic", ">", [&] { proc_->select_next_nic(); } });
@@ -282,13 +282,17 @@ class gui
                     }
                     case LeaveNotify:
                     {
-                        for (auto& btn : buttons_)
+                        const auto e = xevent.xcrossing;
+                        if (!(e.state & Button1Mask)) /* Ensure LeaveNotify is not due to click */
                         {
-                            if (btn.hovered)
-                                btn.hovered = false;
+                            for (auto& btn : buttons_)
+                            {
+                                if (btn.hovered)
+                                    btn.hovered = false;
+                            }
+                            window_extended_ = false;
+                            send_expose_event = true;
                         }
-                        window_extended_ = false;
-                        send_expose_event = true;
                         break;
                     }
                 }
