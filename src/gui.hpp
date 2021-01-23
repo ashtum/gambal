@@ -100,7 +100,7 @@ class gui
             CWColormap | CWBorderPixel | CWBackPixel,
             &attr);
 
-        XStoreName(display_, window_, "gambal");
+        XStoreName(display_, window_, "Gambal");
         auto event_mask = ExposureMask | PointerMotionMask | LeaveWindowMask | EnterWindowMask | ButtonPressMask | ButtonReleaseMask;
         XSelectInput(display_, window_, event_mask);
 
