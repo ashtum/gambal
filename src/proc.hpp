@@ -39,7 +39,7 @@ class nic
   private:
     rxtx latest_bytes_{ std::numeric_limits<uint64_t>::max(), std::numeric_limits<uint64_t>::max() };
     rxtx total_bytes_{};
-    ring_buffer<rxtx, 200> rates_;
+    ring_buffer<rxtx, 100> rates_;
 
   public:
     void update(const rxtx& current_bytes)

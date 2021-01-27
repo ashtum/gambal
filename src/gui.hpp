@@ -412,7 +412,7 @@ class gui
 
         auto rate_it = nic.rates().rbegin();
         const auto h_slots = top - org_top - margin;
-        for (auto i = 1; i < w_slots; i++, rate_it++)
+        for (auto i = 1; i < w_slots && rate_it != nic.rates().rend(); i++, rate_it++)
         {
             if (max_rate == 0)
                 break;
