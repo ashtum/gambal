@@ -5,7 +5,7 @@
 **Gambal** is a tiny transparent window that provides an overview of network, CPU and memory usages.  
 It's light-weight and uses libX11 for GUI and should work on all distros.
 
-![screenshot](https://user-images.githubusercontent.com/11743154/105464742-42815c80-5ca7-11eb-881e-067637981c79.png)
+![screenshot](https://user-images.githubusercontent.com/11743154/106142151-5e44a100-6186-11eb-81fa-652f4a794d3e.gif)
 
 ## Installation
 
