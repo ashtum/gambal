@@ -7,7 +7,11 @@ It's light-weight and uses libX11 for GUI and should work on all distros.
 
 ![screenshot](https://user-images.githubusercontent.com/11743154/105464742-42815c80-5ca7-11eb-881e-067637981c79.png)
 
-## Build
+## Installation
+
+There are .deb and .rpm packages for different atchitectures in [latest release](https://github.com/ashtum/gambal/releases/latest) page.
+
+## Building
 
 ```shell
 sudo apt-get install build-essential cmake libx11-dev
