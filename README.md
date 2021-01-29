@@ -12,7 +12,7 @@ It's light-weight and uses libX11 for GUI and should work on all distros.
 There are .deb and .rpm packages for different atchitectures in [latest release](https://github.com/ashtum/gambal/releases/latest) page.
 
 ## Building
-
+If you are on Arch linux, make sure you have xorg-fonts-misc package installed.
 ```shell
 sudo apt-get install build-essential cmake libx11-dev
 git clone https://github.com/ashtum/gambal.git
