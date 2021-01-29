@@ -57,7 +57,7 @@ class gui
     {
         std::string name;
         std::string font_name;
-        Font font{};
+        Font font_id{};
         int thickness{};
         int char_w{};
         int char_h{};
@@ -126,7 +126,13 @@ class gui
         buttons_.push_back({ "next_style", ">", [&] { select_next_style(); } });
 
         for (auto& style : styles_)
-            style.font = XLoadFont(display_, style.font_name.c_str());
+        {
+            if (auto* const font = XLoadQueryFont(display_, style.font_name.c_str()))
+                style.font_id = font->fid;
+        }
+        styles_.erase(std::remove_if(styles_.begin(), styles_.end(), [&](const auto& style) { return style.font_id == 0; }), styles_.end());
+        if (styles_.empty())
+            throw std::runtime_error{ "can't load necessary fonts, make sure you have xorg-fonts-misc installed" };
 
         style_ = std::find_if(styles_.begin(), styles_.end(), [&](const auto& style) { return style.name == config_->style_name(); });
         if (style_ == styles_.end())
@@ -368,7 +374,7 @@ class gui
                 gcs_.emplace(gc_spec.name, XCreateGC(display_, window_, 0, nullptr));
 
             XSetLineAttributes(display_, gcs_.at(gc_spec.name), 1, LineSolid, CapNotLast, JoinMiter);
-            XSetFont(display_, gcs_.at(gc_spec.name), style_->font);
+            XSetFont(display_, gcs_.at(gc_spec.name), style_->font_id);
             uint8_t alpha = config_->opacity() / 100.0 * 0xFF;
             uint32_t rgba = alpha << 24 | (gc_spec.r * alpha) / 0xFF << 16 | (gc_spec.g * alpha) / 0xFF << 8 | (gc_spec.b * alpha) / 0xFF;
             XSetForeground(display_, gcs_.at(gc_spec.name), rgba);
