@@ -281,25 +281,18 @@ class gui
                         }
                         break;
                     }
+                    case LeaveNotify:
                     case EnterNotify:
                     {
-                        window_extended_ = true;
-                        send_expose_event = true;
-                        break;
-                    }
-                    case LeaveNotify:
-                    {
                         const auto e = xevent.xcrossing;
-                        if (!(e.state & Button1Mask)) /* Ensure LeaveNotify is not due to click */
-                        {
-                            for (auto& btn : buttons_)
-                            {
-                                if (btn.hovered)
-                                    btn.hovered = false;
-                            }
-                            window_extended_ = false;
-                            send_expose_event = true;
-                        }
+                        /* ignore while there is an implicit grab */
+                        if (e.state & (Button1Mask | Button2Mask | Button3Mask | Button4Mask | Button5Mask))
+                            break;
+
+                        window_extended_ = (e.type == EnterNotify);
+                        for (auto& btn : buttons_)
+                            btn.hovered = false;
+                        send_expose_event = true;
                         break;
                     }
                 }
