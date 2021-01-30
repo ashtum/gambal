@@ -1,0 +1,13 @@
+Source: gambal
+Maintainer: Mohammad Nejati <>
+Homepage: https://github.com/ashtum/gambal
+Section: net
+Priority: optional
+Standards-Version: 1.0
+Build-Depends: libx11-dev, cmake, dh-make
+
+Package: gambal
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, xfonts-base
+Description: Graphical system resource monitor
+ A tiny transparent window that provides an overview of network, CPU and memory usages.
