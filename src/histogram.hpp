@@ -5,9 +5,10 @@
 
 namespace gambal
 {
-template<typename T, size_t N>
-class ring_buffer
+template<typename T, size_t S>
+class histogram
 {
+    static constexpr size_t N = S + 1;
     std::array<T, N> buffer_{};
     size_t pos_{};
 
@@ -20,14 +21,13 @@ class ring_buffer
 
     auto static constexpr size()
     {
-        return N;
+        return S;
     }
 
     class iterator
     {
         const T* buffer_;
         size_t pos_;
-        size_t left_;
 
       public:
         using iterator_category = std::bidirectional_iterator_tag;
@@ -36,10 +36,9 @@ class ring_buffer
         using pointer = value_type*;
         using reference = value_type&;
 
-        iterator(const T* buffer, size_t pos, size_t left)
+        iterator(const T* buffer, size_t pos)
             : buffer_(buffer)
             , pos_(pos)
-            , left_(left)
         {
         }
 
@@ -55,37 +54,33 @@ class ring_buffer
 
         auto& operator++()
         {
-            pos_ = (pos_ + 1) % N;
-            --left_;
+            pos_ = (pos_ + N - 1) % N;
             return *this;
         }
 
         auto& operator--()
         {
-            pos_ = (pos_ + N - 1) % N;
-            ++left_;
+            pos_ = (pos_ + 1) % N;
             return *this;
         }
 
         auto operator++(int)
         {
             auto tmp = *this;
-            pos_ = (pos_ + 1) % N;
-            --left_;
+            ++*this;
             return tmp;
         }
 
         auto operator--(int)
         {
             auto tmp = *this;
-            pos_ = (pos_ + N - 1) % N;
-            ++left_;
+            --*this;
             return tmp;
         }
 
         auto operator==(const iterator& lhs) const
         {
-            return lhs.left_ == left_ && lhs.pos_ == pos_ && lhs.buffer_ == buffer_;
+            return lhs.pos_ == pos_ && lhs.buffer_ == buffer_;
         }
 
         auto operator!=(const iterator& lhs) const
@@ -97,22 +92,12 @@ class ring_buffer
 
     auto begin() const
     {
-        return iterator(buffer_.data(), (pos_ + 1) % N, N);
+        return iterator(buffer_.data(), pos_);
     }
 
     auto end() const
     {
-        return iterator(buffer_.data(), (pos_ + 1) % N, 0);
-    }
-
-    auto rbegin() const
-    {
-        return reverse_iterator(end());
-    }
-
-    auto rend() const
-    {
-        return reverse_iterator(begin());
+        return iterator(buffer_.data(), (pos_ + 1) % N);
     }
 };
 } // namespace gambal

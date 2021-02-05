@@ -409,9 +409,9 @@ class gui
         top += 4;
         draw_line("light", coord{ margin, top }, dimn{ window_w_ - 2 * margin, 0 });
 
-        auto rate_it = nic.rates().rbegin();
+        auto rate_it = nic.rates().begin();
         const auto h_slots = top - org_top - margin;
-        for (auto i = 1; i < w_slots && rate_it != nic.rates().rend(); i++, rate_it++)
+        for (auto i = 1; i < w_slots && rate_it != nic.rates().end(); i++, rate_it++)
         {
             if (max_rate == 0)
                 break;

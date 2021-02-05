@@ -1,7 +1,7 @@
 #pragma once
 
 #include "config.hpp"
-#include "ring_buffer.hpp"
+#include "histogram.hpp"
 
 #include <algorithm>
 #include <fstream>
@@ -39,7 +39,7 @@ class nic
   private:
     rxtx latest_bytes_{ std::numeric_limits<uint64_t>::max(), std::numeric_limits<uint64_t>::max() };
     rxtx total_bytes_{};
-    ring_buffer<rxtx, 100> rates_;
+    histogram<rxtx, 100> rates_;
 
   public:
     void update(const rxtx& current_bytes)
@@ -66,14 +66,14 @@ class nic
 
     const auto& latest_rate() const
     {
-        return *rates_.rbegin();
+        return *rates_.begin();
     }
 
     auto max_rate(size_t n) const
     {
-        const auto end = std::next(rates_.rbegin(), n);
+        const auto end = std::next(rates_.begin(), n);
         const auto max_rate =
-            *std::max_element(rates_.rbegin(), end, [](const auto& lhs, const auto& rhs) { return std::max(lhs.rx, lhs.tx) < std::max(rhs.rx, rhs.tx); });
+            *std::max_element(rates_.begin(), end, [](const auto& lhs, const auto& rhs) { return std::max(lhs.rx, lhs.tx) < std::max(rhs.rx, rhs.tx); });
         return std::max(max_rate.rx, max_rate.tx);
     }
 };
