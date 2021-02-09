@@ -5,23 +5,23 @@
 
 namespace gambal
 {
-template<typename T, size_t S>
+template<typename T, size_t N>
 class histogram
 {
-    static constexpr size_t N = S + 1;
-    std::array<T, N> buffer_{};
+    static constexpr const auto S = N + 1;
+    std::array<T, S> buffer_{};
     size_t pos_{};
 
   public:
     auto push_back(T value)
     {
-        pos_ = (pos_ + 1) % N;
+        pos_ = (pos_ + 1) % S;
         buffer_[pos_] = value;
     }
 
     auto static constexpr size()
     {
-        return S;
+        return N;
     }
 
     class iterator
@@ -54,13 +54,13 @@ class histogram
 
         auto& operator++()
         {
-            pos_ = (pos_ + N - 1) % N;
+            pos_ = (pos_ + S - 1) % S;
             return *this;
         }
 
         auto& operator--()
         {
-            pos_ = (pos_ + 1) % N;
+            pos_ = (pos_ + 1) % S;
             return *this;
         }
 
@@ -97,7 +97,7 @@ class histogram
 
     auto end() const
     {
-        return iterator(buffer_.data(), (pos_ + 1) % N);
+        return iterator(buffer_.data(), (pos_ + 1) % S);
     }
 };
 } // namespace gambal
