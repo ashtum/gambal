@@ -13,7 +13,7 @@ class histogram
     size_t pos_{};
 
   public:
-    auto push_back(T value)
+    auto push(T value)
     {
         pos_ = (pos_ + 1) % S;
         buffer_[pos_] = value;

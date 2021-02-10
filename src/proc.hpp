@@ -49,7 +49,7 @@ class nic
         rate.rx = wrap_subtract(current_bytes.rx, latest_bytes_.rx);
         rate.tx = wrap_subtract(current_bytes.tx, latest_bytes_.tx);
 
-        rates_.push_back(rate);
+        rates_.push(rate);
         total_bytes_ += rate;
         latest_bytes_ = current_bytes;
     }
@@ -71,6 +71,7 @@ class nic
 
     auto max_rate(size_t n) const
     {
+        n = std::min(rates_.size(), n);
         const auto end = std::next(rates_.begin(), n);
         const auto max_rate =
             *std::max_element(rates_.begin(), end, [](const auto& lhs, const auto& rhs) { return std::max(lhs.rx, lhs.tx) < std::max(rhs.rx, rhs.tx); });

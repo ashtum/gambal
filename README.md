@@ -5,7 +5,7 @@
 **Gambal** is a tiny transparent window that provides an overview of network, CPU and memory usages.  
 It's light-weight and uses libX11 for GUI and should work on all distros.
 
-![screenshot](https://user-images.githubusercontent.com/11743154/106142151-5e44a100-6186-11eb-81fa-652f4a794d3e.gif)
+![screenshot](https://user-images.githubusercontent.com/11743154/107491850-f425f600-6ba0-11eb-84b2-1bbfbb57ad34.gif)
 
 ## Installation
 
@@ -28,7 +28,8 @@ sudo gtk-update-icon-cache /usr/share/icons/hicolor
 
 ## Gui operations
 
-> **mouseover** Appears options, change network interface or style by click on `<` and `>` buttons.  
+> **mouseover** appears options, change network interface by click on `<` and `>` buttons.  
 > **click and drag** moves window.  
-> **mouse whele up/down** changes window opacity.  
+> **mouse middle-click** toggles font style.  
+> **mouse wheel up/down** changes window opacity.  
 > **right click** exits application.  

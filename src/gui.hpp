@@ -122,8 +122,6 @@ class gui
 
         buttons_.push_back({ "prev_nic", "<", [&] { proc_->select_prev_nic(); } });
         buttons_.push_back({ "next_nic", ">", [&] { proc_->select_next_nic(); } });
-        buttons_.push_back({ "prev_style", "<", [&] { select_prev_style(); } });
-        buttons_.push_back({ "next_style", ">", [&] { select_next_style(); } });
 
         for (auto& style : styles_)
         {
@@ -204,6 +202,11 @@ class gui
                         {
                             window_grab_x = e.x;
                             window_grab_y = e.y;
+                        }
+                        else if (e.button == Button2)
+                        {
+                            rotate_style();
+                            send_expose_event = true;
                         }
                         else if (e.button == Button3)
                         {
@@ -374,22 +377,14 @@ class gui
         }
     }
 
-    void select_prev_style()
+    void rotate_style()
     {
-        if (styles_.begin() == style_)
-            return;
-        style_ = std::prev(style_);
-        update_gcs();
-        config_->style_name(style_->name);
-    }
-
-    void select_next_style()
-    {
-        if (styles_.end() == std::next(style_))
-            return;
         style_ = std::next(style_);
-        update_gcs();
+        if (styles_.end() == style_)
+            style_ = styles_.begin();
+
         config_->style_name(style_->name);
+        update_gcs();
     }
 
     auto draw_net(int top)
@@ -485,11 +480,11 @@ class gui
             return top;
         top += 2;
         const auto org_top = top;
-        const auto bsize = 17;
+        const auto btn_size = 17;
         top += 1;
         for (auto& btn : buttons_)
         {
-            btn.dimn = { bsize, bsize };
+            btn.dimn = { btn_size, btn_size };
             if (btn.name == "prev_nic")
             {
                 btn.disabled = !proc_->is_prev_nic_available();
@@ -499,19 +494,7 @@ class gui
             if (btn.name == "next_nic")
             {
                 btn.disabled = !proc_->is_next_nic_available();
-                btn.coord = coord{ window_w_ - bsize - 1, top };
-            }
-
-            if (btn.name == "prev_style")
-            {
-                btn.disabled = style_ == styles_.begin();
-                btn.coord = coord{ 1, top + bsize + 1 };
-            }
-
-            if (btn.name == "next_style")
-            {
-                btn.disabled = style_ == std::prev(styles_.end());
-                btn.coord = coord{ window_w_ - bsize - 1, top + bsize + 1 };
+                btn.coord = coord{ window_w_ - btn_size - 1, top };
             }
 
             if (btn.hovered && !btn.disabled)
@@ -523,14 +506,9 @@ class gui
                 draw_string_center("prime", btn.coord, btn.dimn, btn.text);
         }
 
-        draw_string_center("prime", coord{ bsize + 1, top }, dimn{ window_w_ - 2 * (bsize + 1), bsize }, proc_->selected_nic_name());
-        top += bsize;
-        draw_line("light", coord{ 0, top }, dimn{ window_w_, 0 });
-        top += 1;
-        draw_string_center("prime", coord{ bsize + 1, top }, dimn{ window_w_ - 2 * (bsize + 1), bsize }, style_->name);
-        top += bsize + 1;
+        draw_string_center("prime", coord{ btn_size + 1, top }, dimn{ window_w_ - 2 * (btn_size + 1), btn_size }, proc_->selected_nic_name());
+        top += btn_size + 1;
         draw_rectangle("light", coord{ 0, org_top }, dimn{ window_w_, top - org_top });
-
         return top;
     }
 
