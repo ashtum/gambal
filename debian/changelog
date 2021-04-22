@@ -1,5 +1,15 @@
+gambal (1.1-1) xenial; urgency=low
+
+  * Change font-style toggle method to middle-click
+  * Bug fixes:
+    - ignore EnterNotify and LeaveNotify while there is an implicit grab
+    - Change XLoadFont to XLoadQueryFont and prevent exit when bold font is not available
+    - Fix size() bug in histogram, Change namings in histogram
+
+ -- Mohammad Nejati <ashtoumspam@gmail.cm>  Thu, 22 Apr 2021 12:01:00 +0330
+
 gambal (1.0-1) xenial; urgency=low
 
   * Initial release.
 
- -- Mohammad Nejati <>  Fri, 22 Jan 2021 13:22:14 +0330
+ -- Mohammad Nejati <ashtumspam@gmail.com>  Fri, 22 Jan 2021 13:22:14 +0330

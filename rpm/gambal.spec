@@ -2,7 +2,7 @@
 
 
 Name:           gambal
-Version:        1.0
+Version:        1.1
 Release:        1%{?dist}
 Summary:        Graphical system resource monitor
 License:        GPLv2
