@@ -1,1 +1,1 @@
-clang-tidy -header-filter=src.* -p=../build ../src/gambal.cpp
+clang-tidy -header-filter=src.*.hpp -p=../build ../src/gambal.cpp
