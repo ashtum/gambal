@@ -1,6 +1,12 @@
 
 #pragma once
 
+#include "icons/close.xbm"
+#include "icons/left-arrow.xbm"
+#include "icons/plus-minus.xbm"
+#include "icons/restart.xbm"
+#include "icons/right-arrow.xbm"
+
 #include "config.hpp"
 #include "proc.hpp"
 
@@ -37,11 +43,10 @@ class gui
     };
     struct button
     {
+        Pixmap icon;
         std::string name;
-        std::string text{};
         std::function<void()> on_click;
         gui::coord coord{};
-        gui::dimn dimn{};
         bool disabled{};
         bool hovered{};
     };
@@ -53,6 +58,7 @@ class gui
     std::vector<button> buttons_;
     std::array<pollfd, 2> poll_fds_{};
     bool window_extended_{};
+    bool window_closed_{};
     struct style
     {
         std::string name;
@@ -120,8 +126,13 @@ class gui
         else
             XMoveWindow(display_, window_, window_x, window_y);
 
-        buttons_.push_back({ "prev_nic", "<", [&] { proc_->select_prev_nic(); } });
-        buttons_.push_back({ "next_nic", ">", [&] { proc_->select_next_nic(); } });
+        const auto create_bitmap = [&](char* bits) { return XCreateBitmapFromData(display_, window_, bits, 17, 17); };
+
+        buttons_.push_back({ create_bitmap(reinterpret_cast<char*>(left_arrow_bits)), "prev_nic", [&] { proc_->select_prev_nic(); } });
+        buttons_.push_back({ create_bitmap(reinterpret_cast<char*>(right_arrow_bits)), "next_nic", [&] { proc_->select_next_nic(); } });
+        buttons_.push_back({ create_bitmap(reinterpret_cast<char*>(close_bits)), "close", [&] { window_closed_ = true; } });
+        buttons_.push_back({ create_bitmap(reinterpret_cast<char*>(plus_minus_bits)), "toggle_style", [&] { rotate_style(); } });
+        buttons_.push_back({ create_bitmap(reinterpret_cast<char*>(restart_bits)), "clear_histogram", [&] {} });
 
         for (auto& style : styles_)
         {
@@ -160,6 +171,8 @@ class gui
         auto window_grab_y{ 0 };
         for (;;)
         {
+            if (window_closed_)
+                return;
 
             if (send_expose_event)
             {
@@ -202,15 +215,6 @@ class gui
                         {
                             window_grab_x = e.x;
                             window_grab_y = e.y;
-                        }
-                        else if (e.button == Button2)
-                        {
-                            rotate_style();
-                            send_expose_event = true;
-                        }
-                        else if (e.button == Button3)
-                        {
-                            return; /* exit from the loop */
                         }
                         else if (e.button == Button4)
                         {
@@ -266,9 +270,10 @@ class gui
                             window_moved = true;
                             XMoveWindow(display_, window_, e.x_root - window_grab_x, e.y_root - window_grab_y);
                         }
+
                         for (auto& btn : buttons_)
                         {
-                            if (e.x >= btn.coord.x && e.x < btn.coord.x + btn.dimn.w && e.y >= btn.coord.y && e.y < btn.coord.y + btn.dimn.h)
+                            if (e.x > btn.coord.x && e.x <= btn.coord.x + 17 && e.y > btn.coord.y && e.y <= btn.coord.y + 17)
                             {
                                 if (!btn.hovered)
                                 {
@@ -305,6 +310,12 @@ class gui
 
     ~gui()
     {
+        for (const auto& btn : buttons_)
+            XFreePixmap(display_, btn.icon);
+
+        for (const auto& style : styles_)
+            XUnloadFont(display_, style.font_id);
+
         for (const auto& gc : gcs_)
             XFreeGC(display_, gc.second);
 
@@ -350,30 +361,37 @@ class gui
     {
         struct gc_spec
         {
+            uint8_t fg_r, fg_g, fg_b;
+            uint8_t bg_r, bg_g, bg_b;
             std::string name;
-            uint8_t r, g, b;
         };
 
-        std::array<gc_spec, 9> gc_specs{ { { "rx", 0x22, 0x8B, 0x22 },
-                                           { "tx", 0xDC, 0x14, 0x3C },
-                                           { "rxtx", 0xFF, 0xA5, 0x00 },
-                                           { "prime", 0x1A, 0x90, 0xFF },
-                                           { "purple", 0xBF, 0x90, 0xFF },
-                                           { "light", 0xBA, 0xDD, 0xFF },
-                                           { "button", 0xF0, 0xF6, 0xFF },
-                                           { "button_hover", 0xDA, 0xEC, 0xFF },
-                                           { "background", 0xFF, 0xFF, 0xFF } } };
+        std::array<gc_spec, 10> gc_specs{ gc_spec{ 0x22, 0x8B, 0x22, 0x00, 0x00, 0x00, "rx" },
+                                          gc_spec{ 0xDC, 0x14, 0x3C, 0x00, 0x00, 0x00, "tx" },
+                                          gc_spec{ 0xFF, 0xA5, 0x00, 0x00, 0x00, 0x00, "rxtx" },
+                                          gc_spec{ 0xBA, 0xDD, 0xFF, 0x00, 0x00, 0x00, "light" },
+                                          gc_spec{ 0x1A, 0x90, 0xFF, 0x00, 0x00, 0x00, "prime" },
+                                          gc_spec{ 0xBF, 0x90, 0xFF, 0x00, 0x00, 0x00, "purple" },
+                                          gc_spec{ 0x1A, 0x90, 0xFF, 0xF0, 0xF6, 0xFF, "button_normal" },
+                                          gc_spec{ 0x1A, 0x90, 0xFF, 0xDA, 0xEC, 0xFF, "button_hovered" },
+                                          gc_spec{ 0xF0, 0xF6, 0xFF, 0xF0, 0xF6, 0xFF, "button_disabled" },
+                                          gc_spec{ 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, "background" } };
 
         for (const auto& gc_spec : gc_specs)
         {
             if (gcs_.find(gc_spec.name) == gcs_.end())
                 gcs_.emplace(gc_spec.name, XCreateGC(display_, window_, 0, nullptr));
 
-            XSetLineAttributes(display_, gcs_.at(gc_spec.name), 1, LineSolid, CapNotLast, JoinMiter);
-            XSetFont(display_, gcs_.at(gc_spec.name), style_->font_id);
+            auto* gc = gcs_.at(gc_spec.name);
+
+            XSetLineAttributes(display_, gc, 1, LineSolid, CapNotLast, JoinMiter);
+            XSetFont(display_, gc, style_->font_id);
+
             uint8_t alpha = config_->opacity() / 100.0 * 0xFF;
-            uint32_t rgba = alpha << 24 | (gc_spec.r * alpha) / 0xFF << 16 | (gc_spec.g * alpha) / 0xFF << 8 | (gc_spec.b * alpha) / 0xFF;
-            XSetForeground(display_, gcs_.at(gc_spec.name), rgba);
+            uint32_t fg_rgba = alpha << 24 | (gc_spec.fg_r * alpha) / 0xFF << 16 | (gc_spec.fg_g * alpha) / 0xFF << 8 | (gc_spec.fg_b * alpha) / 0xFF;
+            uint32_t bg_rgba = alpha << 24 | (gc_spec.bg_r * alpha) / 0xFF << 16 | (gc_spec.bg_g * alpha) / 0xFF << 8 | (gc_spec.bg_b * alpha) / 0xFF;
+            XSetForeground(display_, gc, fg_rgba);
+            XSetBackground(display_, gc, bg_rgba);
         }
     }
 
@@ -484,26 +502,42 @@ class gui
         top += 1;
         for (auto& btn : buttons_)
         {
-            btn.dimn = { btn_size, btn_size };
             if (btn.name == "prev_nic")
             {
                 btn.disabled = !proc_->is_prev_nic_available();
                 btn.coord = coord{ 1, top };
             }
-
-            if (btn.name == "next_nic")
+            else if (btn.name == "next_nic")
             {
                 btn.disabled = !proc_->is_next_nic_available();
                 btn.coord = coord{ window_w_ - btn_size - 1, top };
             }
+            else if (btn.name == "close")
+            {
+                btn.coord = coord{ window_w_ - btn_size - 1, 1 };
+            }
+            else if (btn.name == "toggle_style")
+            {
+                btn.coord = coord{ window_w_ - 2 * btn_size - 2, 1 };
+            }
+            else if (btn.name == "clear_histogram")
+            {
+                btn.coord = coord{ window_w_ - 3 * btn_size - 3, 1 };
+            }
 
-            if (btn.hovered && !btn.disabled)
-                fill_rectangle("button_hover", btn.coord, btn.dimn);
-            else
-                fill_rectangle("button", btn.coord, btn.dimn);
+            draw_rectangle("light", { btn.coord.x - 01, btn.coord.y - 01 }, dimn{ btn_size + 2, btn_size + 2 });
 
-            if (!btn.disabled)
-                draw_string_center("prime", btn.coord, btn.dimn, btn.text);
+            auto* btn_gc = [&] {
+                if (btn.disabled)
+                    return gcs_.at("button_disabled");
+
+                if (btn.hovered)
+                    return gcs_.at("button_hovered");
+
+                return gcs_.at("button_normal");
+            }();
+
+            XCopyPlane(display_, btn.icon, window_, btn_gc, 0, 0, btn_size, btn_size, btn.coord.x + 01, btn.coord.y + 01, 1);
         }
 
         draw_string_center("prime", coord{ btn_size + 1, top }, dimn{ window_w_ - 2 * (btn_size + 1), btn_size }, proc_->selected_nic_name());
