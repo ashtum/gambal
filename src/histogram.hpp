@@ -24,22 +24,28 @@ class histogram
         return N;
     }
 
+    template<typename U>
     class iterator
     {
-        const T* buffer_;
+        U* buffer_;
         size_t pos_;
 
       public:
         using iterator_category = std::bidirectional_iterator_tag;
-        using value_type = const T;
+        using value_type = U;
         using difference_type = std::ptrdiff_t;
         using pointer = value_type*;
         using reference = value_type&;
 
-        iterator(const T* buffer, size_t pos)
+        iterator(U* buffer, size_t pos)
             : buffer_(buffer)
             , pos_(pos)
         {
+        }
+
+        auto& operator*()
+        {
+            return *(buffer_ + pos_);
         }
 
         auto const& operator*() const
@@ -88,16 +94,25 @@ class histogram
             return !(operator==(lhs));
         }
     };
-    using reverse_iterator = std::reverse_iterator<iterator>;
 
     auto begin() const
     {
-        return iterator(buffer_.data(), pos_);
+        return iterator<std::add_const_t<T>>(buffer_.data(), pos_);
+    }
+
+    auto begin()
+    {
+        return iterator<T>(buffer_.data(), pos_);
     }
 
     auto end() const
     {
-        return iterator(buffer_.data(), (pos_ + 1) % S);
+        return iterator<std::add_const_t<T>>(buffer_.data(), (pos_ + 1) % S);
+    }
+
+    auto end()
+    {
+        return iterator<T>(buffer_.data(), (pos_ + 1) % S);
     }
 };
 } // namespace gambal
