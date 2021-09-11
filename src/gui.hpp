@@ -250,13 +250,11 @@ class gui
                             }
                             else
                             {
-                                for (auto& btn : buttons_)
+                                auto btn = std::find_if(buttons_.begin(), buttons_.end(), [](const auto& btn) { return btn.hovered && !btn.disabled; });
+                                if (btn != buttons_.end())
                                 {
-                                    if (btn.hovered && !btn.disabled)
-                                    {
-                                        btn.on_click();
-                                        send_expose_event = true;
-                                    }
+                                    btn->on_click();
+                                    send_expose_event = true;
                                 }
                             }
                         }
