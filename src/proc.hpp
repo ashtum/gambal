@@ -77,6 +77,11 @@ class nic
             *std::max_element(rates_.begin(), end, [](const auto& lhs, const auto& rhs) { return std::max(lhs.rx, lhs.tx) < std::max(rhs.rx, rhs.tx); });
         return std::max(max_rate.rx, max_rate.tx);
     }
+
+    void clear_histogram()
+    {
+        std::fill(std::next(rates_.begin()), rates_.end(), rxtx{ 0, 0 });
+    }
 };
 
 class cpu
@@ -247,7 +252,7 @@ class proc
         return selected_nic_ != nics_.begin();
     }
 
-    const auto& selected_nic() const
+    auto& selected_nic()
     {
         return selected_nic_->second;
     }

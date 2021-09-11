@@ -132,7 +132,7 @@ class gui
         buttons_.push_back({ create_bitmap(reinterpret_cast<char*>(right_arrow_bits)), "next_nic", [&] { proc_->select_next_nic(); } });
         buttons_.push_back({ create_bitmap(reinterpret_cast<char*>(close_bits)), "close", [&] { window_closed_ = true; } });
         buttons_.push_back({ create_bitmap(reinterpret_cast<char*>(plus_minus_bits)), "toggle_style", [&] { rotate_style(); } });
-        buttons_.push_back({ create_bitmap(reinterpret_cast<char*>(restart_bits)), "clear_histogram", [&] {} });
+        buttons_.push_back({ create_bitmap(reinterpret_cast<char*>(restart_bits)), "clear_histogram", [&] { proc_->selected_nic().clear_histogram(); } });
 
         for (auto& style : styles_)
         {
