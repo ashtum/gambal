@@ -6,5 +6,27 @@ ColumnLimit: 160
 AlwaysBreakAfterDefinitionReturnType: None
 AlwaysBreakAfterReturnType: None
 AllowShortFunctionsOnASingleLine: false
-BreakBeforeBraces: Allman
 AlignAfterOpenBracket: AlwaysBreak
+AllowAllArgumentsOnNextLine: false
+FixNamespaceComments: true
+PenaltyBreakAssignment: 1000
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel:  true
+  AfterClass:      true
+  AfterControlStatement: Always
+  AfterEnum:       true
+  AfterFunction:   true
+  AfterNamespace:  true
+  AfterObjCDeclaration: true
+  AfterStruct:     true
+  AfterUnion:      true
+  AfterExternBlock: true
+  BeforeCatch:     true
+  BeforeElse:      true
+  BeforeLambdaBody: false
+  BeforeWhile:     true
+  IndentBraces:    false
+  SplitEmptyFunction: true
+  SplitEmptyRecord: true
+  SplitEmptyNamespace: true

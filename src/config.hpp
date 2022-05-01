@@ -13,6 +13,7 @@ class config
     unsigned int opacity_{ 90 };
     int window_x_{ -1 };
     int window_y_{ -1 };
+    bool sigma_{true};
 
   public:
     explicit config(std::string path)
@@ -20,7 +21,7 @@ class config
     {
         std::ifstream ifs{ path_ };
         if (ifs.is_open())
-            ifs >> style_name_ >> nic_name_ >> opacity_ >> window_x_ >> window_y_;
+            ifs >> style_name_ >> nic_name_ >> opacity_ >> window_x_ >> window_y_ >> sigma_;
     }
 
     const auto& style_name() const
@@ -73,12 +74,23 @@ class config
         update_settings_file();
     }
 
+    auto sigma() const
+    {
+        return sigma_;
+    }
+
+    void toggle_sigma()
+    {
+        sigma_ = !sigma_;
+        update_settings_file();
+    }
+
   private:
     void update_settings_file()
     {
         std::ofstream ofs{ path_ };
         if (ofs.is_open())
-            ofs << style_name_ << '\n' << nic_name_ << '\n' << opacity_ << '\n' << window_x_ << '\n' << window_y_ << '\n';
+            ofs << style_name_ << '\n' << nic_name_ << '\n' << opacity_ << '\n' << window_x_ << '\n' << window_y_ << '\n' << sigma_ << '\n';
     }
 };
 } // namespace gambal
