@@ -1,9 +1,16 @@
+gambal (1.3-1) xenial; urgency=low
+
+  * Add button for toggling total download and upload
+  * Reduce window width
+
+ -- Mohammad Nejati <<ashtoumspam@gmail.com>  Sun, 1 May 2022 12:00:00 +0330
+
 gambal (1.2-1) xenial; urgency=low
 
   * Add button set for different operations
   * Add clear histogram feature
 
- -- Mohammad Nejati <ashtoumspam@gmail.cm>  Thu, 3 Oct 2021 19:23:00 +0330
+ -- Mohammad Nejati <<ashtoumspam@gmail.com>  Thu, 3 Oct 2021 19:23:00 +0330
 
 gambal (1.1-1) xenial; urgency=low
 
@@ -13,7 +20,7 @@ gambal (1.1-1) xenial; urgency=low
     - Change XLoadFont to XLoadQueryFont and prevent exit when bold font is not available
     - Fix size() bug in histogram, Change namings in histogram
 
- -- Mohammad Nejati <ashtoumspam@gmail.cm>  Thu, 22 Apr 2021 12:01:00 +0330
+ -- Mohammad Nejati <<ashtoumspam@gmail.com>  Thu, 22 Apr 2021 12:01:00 +0330
 
 gambal (1.0-1) xenial; urgency=low
 
