@@ -6,6 +6,7 @@
 #include "icons/plus-minus.xbm"
 #include "icons/restart.xbm"
 #include "icons/right-arrow.xbm"
+#include "icons/sigma.xbm"
 
 #include "config.hpp"
 #include "proc.hpp"
@@ -69,7 +70,7 @@ class gui
         int char_h{};
         int window_width{};
     };
-    std::vector<style> styles_{ { "normal", "6x13", {}, 2, 6, 13, 158 }, { "bold", "7x13B*", {}, 3, 7, 13, 174 } };
+    std::vector<style> styles_{ { "normal", "6x13", {}, 2, 6, 13, 142 }, { "bold", "7x13B*", {}, 3, 7, 13, 158 } };
     decltype(styles_)::iterator style_{ styles_.begin() };
     int window_w_{ style_->window_width };
     int window_h_{ 1 };
@@ -132,6 +133,7 @@ class gui
         buttons_.push_back({ create_bitmap(reinterpret_cast<char*>(right_arrow_bits)), "next_nic", [&] { proc_->select_next_nic(); } });
         buttons_.push_back({ create_bitmap(reinterpret_cast<char*>(close_bits)), "close", [&] { window_closed_ = true; } });
         buttons_.push_back({ create_bitmap(reinterpret_cast<char*>(plus_minus_bits)), "toggle_style", [&] { rotate_style(); } });
+        buttons_.push_back({ create_bitmap(reinterpret_cast<char*>(sigma_bits)), "sigma", [&] { config_->toggle_sigma(); } });
         buttons_.push_back({ create_bitmap(reinterpret_cast<char*>(restart_bits)), "clear_histogram", [&] { proc_->selected_nic().clear_histogram(); } });
 
         for (auto& style : styles_)
@@ -418,7 +420,6 @@ class gui
         top += style_->char_h + 1;
         draw_string("tx", coord{ margin, top }, humanize_size(nic.latest_rate().tx) + "/s");
         top += 4;
-        draw_line("light", coord{ margin, top }, dimn{ window_w_ - 2 * margin, 0 });
 
         auto rate_it = nic.rates().begin();
         const auto h_slots = top - org_top - margin;
@@ -440,10 +441,15 @@ class gui
             draw_candle("rxtx", std::min(rate_it->rx, rate_it->tx));
         }
 
-        top += style_->char_h + 1;
-        draw_string("prime", coord{ margin, top }, "D " + humanize_size(nic.total_bytes().rx, 6));
-        draw_string("prime", coord{ window_w_ / 2, top }, "U " + humanize_size(nic.total_bytes().tx, 6));
-        top += margin;
+        if (config_->sigma())
+        {
+            draw_line("light", coord{ margin, top }, dimn{ window_w_ - 2 * margin, 0 });
+            top += style_->char_h + 1;
+            draw_string("prime", coord{ margin, top }, "D " + humanize_size(nic.total_bytes().rx, 5));
+            draw_string("prime", coord{ window_w_ / 2, top }, "U " + humanize_size(nic.total_bytes().tx, 5));
+            top += margin;
+        }
+
         draw_rectangle("light", coord{ 0, org_top }, dimn{ window_w_, top - org_top });
         return top;
     }
@@ -518,9 +524,13 @@ class gui
             {
                 btn.coord = coord{ window_w_ - 2 * btn_size - 2, 1 };
             }
-            else if (btn.name == "clear_histogram")
+            else if (btn.name == "sigma")
             {
                 btn.coord = coord{ window_w_ - 3 * btn_size - 3, 1 };
+            }
+            else if (btn.name == "clear_histogram")
+            {
+                btn.coord = coord{ window_w_ - 4 * btn_size - 4, 1 };
             }
 
             draw_rectangle("light", { btn.coord.x - 01, btn.coord.y - 01 }, dimn{ btn_size + 2, btn_size + 2 });
