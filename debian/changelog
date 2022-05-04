@@ -1,3 +1,9 @@
+gambal (1.4-1) xenial; urgency=low
+
+  * Reduce window width
+
+ -- Mohammad Nejati <<ashtoumspam@gmail.com>  Wed, 4 May 2022 13:00:00 +0330
+
 gambal (1.3-1) xenial; urgency=low
 
   * Add button for toggling total download and upload
