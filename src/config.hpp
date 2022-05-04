@@ -13,7 +13,7 @@ class config
     unsigned int opacity_{ 90 };
     int window_x_{ -1 };
     int window_y_{ -1 };
-    bool sigma_{true};
+    bool sigma_{ true };
 
   public:
     explicit config(std::string path)

@@ -73,8 +73,9 @@ class nic
     {
         n = std::min(rates_.size(), n);
         const auto end = std::next(rates_.begin(), n);
-        const auto max_rate =
-            *std::max_element(rates_.begin(), end, [](const auto& lhs, const auto& rhs) { return std::max(lhs.rx, lhs.tx) < std::max(rhs.rx, rhs.tx); });
+        const auto max_rate = *std::max_element(rates_.begin(), end, [](const auto& lhs, const auto& rhs) {
+            return std::max(lhs.rx, lhs.tx) < std::max(rhs.rx, rhs.tx);
+        });
         return std::max(max_rate.rx, max_rate.tx);
     }
 

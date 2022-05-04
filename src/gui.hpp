@@ -70,7 +70,7 @@ class gui
         int char_h{};
         int window_width{};
     };
-    std::vector<style> styles_{ { "normal", "6x13", {}, 2, 6, 13, 142 }, { "bold", "7x13B*", {}, 3, 7, 13, 158 } };
+    std::vector<style> styles_{ { "normal", "6x13", {}, 2, 6, 13, 126 }, { "bold", "7x13B*", {}, 3, 7, 13, 142 } };
     decltype(styles_)::iterator style_{ styles_.begin() };
     int window_w_{ style_->window_width };
     int window_h_{ 1 };
@@ -410,15 +410,15 @@ class gui
         const auto org_top = top;
         const auto margin = 5;
         const auto& nic = proc_->selected_nic();
-        const auto w_slots = window_w_ - 10 * style_->char_w - 10;
+        const auto w_slots = window_w_ - 7 * style_->char_w - 12;
         const auto max_rate = nic.max_rate(w_slots);
 
         top += style_->char_h + 1;
-        draw_string("prime", coord{ margin, top }, humanize_size(max_rate) + "/s");
+        draw_string("prime", coord{ margin, top }, humanize_size(max_rate) + "s");
         top += style_->char_h + 1;
-        draw_string("rx", coord{ margin, top }, humanize_size(nic.latest_rate().rx) + "/s");
+        draw_string("rx", coord{ margin, top }, humanize_size(nic.latest_rate().rx) + "s");
         top += style_->char_h + 1;
-        draw_string("tx", coord{ margin, top }, humanize_size(nic.latest_rate().tx) + "/s");
+        draw_string("tx", coord{ margin, top }, humanize_size(nic.latest_rate().tx) + "s");
         top += 4;
 
         auto rate_it = nic.rates().begin();
@@ -445,8 +445,8 @@ class gui
         {
             draw_line("light", coord{ margin, top }, dimn{ window_w_ - 2 * margin, 0 });
             top += style_->char_h + 1;
-            draw_string("prime", coord{ margin, top }, "D " + humanize_size(nic.total_bytes().rx, 5));
-            draw_string("prime", coord{ window_w_ / 2, top }, "U " + humanize_size(nic.total_bytes().tx, 5));
+            draw_string("prime", coord{ margin, top }, "D " + humanize_size(nic.total_bytes().rx, 4));
+            draw_string("prime", coord{ window_w_ / 2, top }, "U " + humanize_size(nic.total_bytes().tx, 4));
             top += margin;
         }
 
@@ -572,7 +572,7 @@ class gui
         }
     }
 
-    static std::string humanize_size(uint64_t size, size_t max_width = 4)
+    static std::string humanize_size(uint64_t size, ssize_t max_width = 3)
     {
         std::array<const char*, 7> units = { "B", "KB", "MB", "GB", "TB", "PB", "EB" };
 
@@ -583,15 +583,15 @@ class gui
 
         const auto order = static_cast<size_t>(std::ceil((str.size() - 3) / 3.0));
 
-        auto int_digits = str.size() % 3;
+        ssize_t int_digits = str.size() % 3;
         if (int_digits == 0)
             int_digits = 3;
 
         const auto fraction_digits = max_width - int_digits - 1;
-        if (!fraction_digits)
-            return str.substr(0, 3) + " " + units[order];
+        if (fraction_digits <= 0)
+            return str.substr(0, int_digits) + " " + units[order];
 
-        return { str.substr(0, int_digits) + "." + str.substr(int_digits, std::min(fraction_digits, order)) + " " + units[order] };
+        return { str.substr(0, int_digits) + "." + str.substr(int_digits, std::min(static_cast<size_t>(fraction_digits), order)) + " " + units[order] };
     }
 };
 } // namespace gambal
