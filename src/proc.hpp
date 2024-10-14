@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <cinttypes>
 #include <limits>
 #include <map>
 #include <sstream>
