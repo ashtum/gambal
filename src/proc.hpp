@@ -121,30 +121,15 @@ struct mem
 class proc
 {
     config* config_;
-    std::ifstream net_ifs_;
-    std::ifstream stat_ifs_;
-    std::ifstream meminfo_ifs_;
     std::map<std::string, nic> nics_;
     std::vector<cpu> cpus_;
     mem mem_;
-    decltype(nics_)::iterator selected_nic_{};
+    decltype(nics_)::iterator selected_nic_;
 
   public:
     explicit proc(config* config)
         : config_(config)
-        , net_ifs_("/proc/net/dev")
-        , stat_ifs_("/proc/stat")
-        , meminfo_ifs_("/proc/meminfo")
     {
-        if (!net_ifs_.is_open())
-            throw std::runtime_error("unable to open file at /proc/net/dev");
-
-        if (!stat_ifs_.is_open())
-            throw std::runtime_error("unable to open file at /proc/stat");
-
-        if (!meminfo_ifs_.is_open())
-            throw std::runtime_error("unable to open file at /proc/meminfo");
-
         update();
 
         if (nics_.empty())
@@ -159,12 +144,14 @@ class proc
     {
         std::string line;
 
-        net_ifs_.clear();
-        net_ifs_.seekg(0);
-        std::getline(net_ifs_, line); /* ignore header lines */
-        std::getline(net_ifs_, line); /* ignore header lines */
+        std::ifstream net_ifs("/proc/net/dev");
+        if (!net_ifs.is_open())
+            throw std::runtime_error("unable to open file at /proc/net/dev");
 
-        while (std::getline(net_ifs_, line))
+        std::getline(net_ifs, line); /* ignore header lines */
+        std::getline(net_ifs, line); /* ignore header lines */
+
+        while (std::getline(net_ifs, line))
         {
             std::istringstream iss(line);
             std::string nic_name;
@@ -185,11 +172,13 @@ class proc
             nic.update(current_bytes);
         }
 
-        stat_ifs_.clear();
-        stat_ifs_.seekg(0);
-        std::getline(stat_ifs_, line); /* ignore header lines */
+        std::ifstream stat_ifs("/proc/stat");
+        if (!stat_ifs.is_open())
+            throw std::runtime_error("unable to open file at /proc/stat");
 
-        while (std::getline(stat_ifs_, line))
+        std::getline(stat_ifs, line); /* ignore header lines */
+
+        while (std::getline(stat_ifs, line))
         {
             std::istringstream iss(line);
             std::string tag;
@@ -209,10 +198,12 @@ class proc
             cpus_.at(index).update(totaltime, usagetime);
         }
 
-        meminfo_ifs_.clear();
-        meminfo_ifs_.seekg(0);
+        std::ifstream meminfo_ifs("/proc/meminfo");
+        if (!meminfo_ifs.is_open())
+            throw std::runtime_error("unable to open file at /proc/meminfo");
+
         uint64_t total = 0, free = 0, buff = 0, cache = 0, reclaimable = 0;
-        while (std::getline(meminfo_ifs_, line))
+        while (std::getline(meminfo_ifs, line))
         {
             std::istringstream iss(line);
             std::string tag;
